@@ -1,0 +1,234 @@
+@use '../basic/index' as b;
+
+input {
+    &[type='text'],
+    &[type='email'],
+    &[type='password'],
+    &[type='number'],
+    &[type='tel'],
+    &[type='date'] {
+        width: 100%;
+        //margin-bottom: 1rem;
+        padding: 0.25rem 0.5rem;
+        transition: b.$transition;
+        border: 1px solid b.$basic-green;
+        //border-radius: 1rem;
+        font-size: 1.2rem;
+        transition: b.$transition;
+
+        &:focus,
+        &:focus-visible,
+        &:focus-within {
+            outline: 1px solid b.$basic-green;
+            border: 1px solid b.$basic-green;
+        }
+
+        &:disabled {
+            background-color: b.$basic-grey2;
+            //color: b.$basic-white;
+        }
+    }
+}
+
+select,
+textarea {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid b.$basic-green;
+    border-radius: 0.25rem;
+    font-size: 1.2rem !important;
+    padding: 0.1rem 0.5rem !important;
+    transition: b.$transition;
+
+    &:focus,
+    &:focus-visible,
+    &:focus-within {
+        outline: 1px solid b.$basic-green;
+        border: 1px solid b.$basic-green;
+    }
+}
+
+label {
+    &:has(input[type='file']:disabled) {
+        display: none;
+    }
+}
+
+input[type='file'] {
+    color: b.$basic-green;
+
+    &:disabled {
+        display: none;
+    }
+}
+
+.form-field {
+    position: relative;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #106324;
+    border-radius: 1rem;
+
+    .form-field__label {
+        position: absolute;
+        top: -1rem;
+        left: 1rem;
+        background-color: b.$basic-green;
+        padding: 0.2rem 1rem 0.1rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: b.$basic-white;
+        border-radius: 1rem;
+    }
+
+    &__input {
+        &:first-of-type {
+            margin-top: 0.5rem;
+        }
+
+        &:has(input[type='file']:disabled) {
+            padding-bottom: 0;
+        }
+
+        input[type='file']::file-selector-button {
+            margin-right: 20px;
+            border: none;
+            background: b.$basic-green;
+            padding: 0.35rem 1rem;
+            border-radius: 2rem;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s ease-in-out;
+        }
+
+        input[type='file']::file-selector-button:hover {
+            background: b.$basic-green2;
+        }
+    }
+
+    .detail-info {
+        .form-field__input {
+            &:first-of-type {
+                margin-top: 0;
+            }
+        }
+    }
+
+    label {
+        position: relative;
+
+        .required {
+            display: inline-block;
+            color: b.$basic-green;
+            font-weight: 700;
+            margin-left: 0.25rem;
+        }
+    }
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+
+    .input-group-text {
+        background-color: b.$basic-grey2;
+        color: b.$basic-grey;
+        padding: 0.5rem 1rem;
+        border: 1px solid b.$basic-grey;
+        border-right: 0;
+        border-radius: 1rem 0 0 1rem;
+        font-size: 1.2rem;
+
+        + input {
+            border-radius: 0 1rem 1rem 0;
+        }
+    }
+    &.reverse {
+        .input-group-text {
+            border-radius: 0 1rem 1rem 0;
+            border-left: 0;
+            border-right: 1px solid b.$basic-grey;
+        }
+
+        input {
+            border-radius: 1rem 0 0 1rem;
+        }
+    }
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 140px;
+    height: 57px;
+    margin-bottom: 0 !important;
+
+    &::before {
+        content: 'NE';
+        left: 10px;
+    }
+    &::after {
+        content: 'ANO';
+        right: 0%;
+    }
+    &::before,
+    &::after {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        top: 75%;
+        font-size: 1.2rem;
+        color: b.$basic-black;
+    }
+    input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+
+        &:checked + .slider {
+            background-color: b.$basic-green;
+
+            &:before {
+                -webkit-transform: translateX(25px);
+                -ms-transform: translateX(25px);
+                transform: translateX(25px);
+            }
+        }
+
+        &:focus + .slider {
+            box-shadow: 0 0 1px #2196f3;
+        }
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 29px;
+        left: 27px;
+        right: 59px;
+        bottom: 0;
+        background-color: b.$basic-grey;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+
+        &::before {
+            position: absolute;
+            content: '';
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: 0.4s;
+            transition: 0.4s;
+        }
+
+        &.round {
+            border-radius: 34px;
+            &::before {
+                border-radius: 50%;
+            }
+        }
+    }
+}

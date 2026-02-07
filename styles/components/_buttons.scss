@@ -1,0 +1,41 @@
+@use '../basic' as b;
+
+.btn {
+    display: inline-block;
+    padding: 0.5rem 2rem;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    font-size: 1.2rem;
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: b.$transition;
+}
+
+.btn-primary {
+    background-color: b.$basic-green;
+    color: b.$basic-white;
+
+    &:hover {
+        background-color: b.$basic-green2;
+    }
+}
+
+.btn-secondary {
+    background-color: #a8a8a8;
+    color: b.$basic-black;
+    &:hover {
+        background-color: b.$basic-grey2;
+        color: b.$basic-grey;
+    }
+}
+
+.btn-logout {
+    background-color: #b91c1c;
+    color: b.$basic-white;
+    font-size: 1rem;
+    &:hover {
+        background-color: #7f1d1d;
+    }
+}

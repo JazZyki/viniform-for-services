@@ -1,0 +1,76 @@
+import '../styles/global.scss';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+
+const APP_NAME = 'Viniform4services';
+const APP_DEFAULT_TITLE = 'ViniForm - Zakázkový list';
+const APP_TITLE_TEMPLATE = '%s - PWA App';
+const APP_DESCRIPTION =
+    'Zakázkový list pro nasmlouvané servisy, created by Jakub Zykl';
+
+export const metadata = {
+    applicationName: APP_NAME,
+    title: {
+        default: APP_DEFAULT_TITLE,
+        template: APP_TITLE_TEMPLATE,
+    },
+    description: APP_DESCRIPTION,
+    manifest: '/manifest.json',
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: 'default',
+        title: APP_DEFAULT_TITLE,
+        // startUpImage: [],
+    },
+    formatDetection: {
+        telephone: false,
+    },
+    openGraph: {
+        type: 'website',
+        siteName: APP_NAME,
+        title: {
+            default: APP_DEFAULT_TITLE,
+            template: APP_TITLE_TEMPLATE,
+        },
+        description: APP_DESCRIPTION,
+    },
+    twitter: {
+        card: 'summary',
+        title: {
+            default: APP_DEFAULT_TITLE,
+            template: APP_TITLE_TEMPLATE,
+        },
+        description: APP_DESCRIPTION,
+    },
+};
+
+export const viewport = {
+    themeColor: '#FFFFFF',
+};
+
+export default function RootLayout({ children }) {
+    return (
+        <html lang="cs">
+            <body>
+                <div className="min-h-screen max-w-md m-auto bg-white overflow-hidden">
+                    <div>
+                        <img
+                            src="../logo.png"
+                            alt="VinicarsLogo"
+                            width={100}
+                            className="pt-8 w-[90%] m-auto"
+                        />
+                        <h1 className="text-4xl pb-2 border-b-4 border-maingreen">
+                            Zakázkový list
+                        </h1>
+                    </div>
+                    <div className="p-4 relative">
+                        <Header />
+                        {children}
+                        <Footer />
+                    </div>
+                </div>
+            </body>
+        </html>
+    );
+}
