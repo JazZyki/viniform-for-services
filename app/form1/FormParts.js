@@ -30,8 +30,6 @@ export default function FormPart({
         formData[`${id}Lak`]
     );
 
-    const userRole = localStorage.getItem('userRole');
-    const isAdminOrEditor = userRole === 'admin' || userRole === 'editor';
     const hasNoImage = filledImages.length === 0;
 
     return (
@@ -47,7 +45,7 @@ export default function FormPart({
                         </span>
                     )}
                 </div>
-                {isAdminOrEditor && currentPrice > 0 && (
+                {currentPrice > 0 && (
                     <div className="flex flex-col items-end">
                         <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold border border-green-200">
                             Reálná cena: {realPrice.toLocaleString()} Kč

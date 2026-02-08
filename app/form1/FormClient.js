@@ -107,13 +107,9 @@ export default function FormPage({ initialTechnician }) {
     };
 
     const [formData, setFormData] = useState(createInitialState());
-    const [userRole, setUserRole] = useState('');
-    const isAdminOrEditor = userRole === 'admin' || userRole === 'editor';
 
     useEffect(() => {
         async function initApp() {
-            const role = localStorage.getItem('userRole') || '';
-            setUserRole(role);
             // Nejprve vyčistíme staré věci
             await autoCleanup();
 
@@ -1058,33 +1054,32 @@ export default function FormPage({ initialTechnician }) {
                                 />
                             )}
                         </div>
-                        {isAdminOrEditor && (
-                            <div className="mt-10 p-6 bg-green-50 rounded-xl border-2 border-maingreen">
-                                <h3 className="text-lg font-bold text-maingreen mb-2 uppercase tracking-tight">
-                                    Souhrn kalkulace
-                                </h3>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-gray-600">
-                                        <span>Základní oprava:</span>
-                                        <span>
-                                            {pricing.base.toLocaleString()} Kč
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-gray-600">
-                                        <span>Režijní materiál (2%):</span>
-                                        <span>
-                                            {pricing.fee.toLocaleString()} Kč
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-xl font-black text-maingreen border-t pt-2 mt-2">
-                                        <span>CELKEM BEZ DPH:</span>
-                                        <span>
-                                            {pricing.total.toLocaleString()} Kč
-                                        </span>
-                                    </div>
+
+                        <div className="mt-10 p-6 bg-green-50 rounded-xl border-2 border-maingreen">
+                            <h3 className="text-lg font-bold text-maingreen mb-2 uppercase tracking-tight">
+                                Souhrn kalkulace
+                            </h3>
+                            <div className="space-y-1">
+                                <div className="flex justify-between text-gray-600">
+                                    <span>Základní oprava:</span>
+                                    <span>
+                                        {pricing.base.toLocaleString()} Kč
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-gray-600">
+                                    <span>Režijní materiál (2%):</span>
+                                    <span>
+                                        {pricing.fee.toLocaleString()} Kč
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-xl font-black text-maingreen border-t pt-2 mt-2">
+                                    <span>CELKEM BEZ DPH:</span>
+                                    <span>
+                                        {pricing.total.toLocaleString()} Kč
+                                    </span>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
 
