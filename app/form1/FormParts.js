@@ -6,13 +6,13 @@ import { DENT_DIAMETERS } from './config';
 export default function FormPart({
     id,
     label,
-    category,
     formData,
     onImageChange,
     onRemoveImage,
     onChange,
     onCheckboxChange,
     realPrice,
+    hidePhotos = false,
 }) {
     const images = formData[id] || [];
     const filledImages = images.filter((img) => img instanceof File);
@@ -41,7 +41,7 @@ export default function FormPart({
                     <p className="font-bold text-lg uppercase text-maingreen">
                         {label}
                     </p>
-                    {hasNoImage && (
+                    {!hidePhotos && hasNoImage && (
                         <span className="text-[#8f2215] text-[10px] font-black uppercase tracking-tighter">
                             ⚠ Povinná fotografie dílu
                         </span>
@@ -61,7 +61,7 @@ export default function FormPart({
                                     formData[`${id}Alu`],
                                     formData[`${id}Lak`]
                                 ) && (
-                                <span className="text-[10px] text-red-500 font-bold uppercase mt-1">
+                                <span className="text-[10px] text-orange-700 font-bold uppercase mt-1">
                                     Aktivována sleva 50%
                                 </span>
                             )}
@@ -70,47 +70,55 @@ export default function FormPart({
             </div>
 
             {/* Fotodokumentace - kompaktní zobrazení */}
-            <div className="mb-6">
-                <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider">
-                    Fotodokumentace (max 5):
-                </p>
-                <div className="grid grid-cols-3 gap-2 items-center">
-                    {/* Renderování existujících fotek */}
-                    {images.map(
-                        (file, index) =>
-                            file instanceof File && (
-                                <ImagePreview
-                                    key={`${id}-img-${index}`}
-                                    file={file}
-                                    onRemove={() => onRemoveImage(id, index)}
-                                />
-                            )
-                    )}
+            {!hidePhotos && (
+                <div className="mb-6">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider">
+                        Fotodokumentace (max 5):
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 items-center">
+                        {/* Renderování existujících fotek */}
+                        {images.map(
+                            (file, index) =>
+                                file instanceof File && (
+                                    <ImagePreview
+                                        key={`${id}-img-${index}`}
+                                        file={file}
+                                        onRemove={() =>
+                                            onRemoveImage(id, index)
+                                        }
+                                    />
+                                )
+                        )}
 
-                    {/* Slot pro přidání další fotky */}
-                    {canAddMore && (
-                        <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-white hover:border-maingreen cursor-pointer transition-colors">
-                            <span className="text-2xl text-gray-400">+</span>
-                            <span className="text-[10px] text-gray-400 font-bold">
-                                FOTO
-                            </span>
-                            <input
-                                type="file"
-                                accept="image/*; capture=camera"
-                                className="hidden"
-                                //capture="camera"
-                                onChange={(e) =>
-                                    onImageChange(
-                                        id,
-                                        images.findIndex((img) => img === ''),
-                                        e.target.files[0]
-                                    )
-                                }
-                            />
-                        </label>
-                    )}
+                        {/* Slot pro přidání další fotky */}
+                        {canAddMore && (
+                            <label className="h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-white hover:border-maingreen cursor-pointer transition-colors">
+                                <span className="text-2xl text-gray-400">
+                                    +
+                                </span>
+                                <span className="text-[10px] text-gray-400 font-bold">
+                                    FOTO
+                                </span>
+                                <input
+                                    type="file"
+                                    accept="image/*; capture=camera"
+                                    className="hidden"
+                                    //capture="camera"
+                                    onChange={(e) =>
+                                        onImageChange(
+                                            id,
+                                            images.findIndex(
+                                                (img) => img === ''
+                                            ),
+                                            e.target.files[0]
+                                        )
+                                    }
+                                />
+                            </label>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Parametry dílu */}
             <div className="grid grid-cols-2 gap-4">
@@ -123,7 +131,7 @@ export default function FormPart({
                         name={`${id}Count`}
                         value={formData[`${id}Count`] || 0}
                         onChange={onChange}
-                        className="w-full p-2 border rounded-lg bg-white"
+                        className="w-full p-2 border rounded-lg bg-white h-[42px]"
                         min="0"
                     />
                 </label>

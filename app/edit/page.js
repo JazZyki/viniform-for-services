@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import { FormInput } from '../form1/FormInput';
 import { CAR_PARTS, VEHICLE_BRANDS } from '../form1/config';
-import { calculatePartPrice } from '../../lib/priceCalculator';
+import { calculateDentPrice } from '../../lib/priceCalculator';
 import { generateFinalPDF } from '../../lib/pdfGenerator';
 import { useRouter } from 'next/navigation';
+import FormPart from '../form1/FormParts';
 
 export default function CalculatorPage() {
     // 1. Přidáme klíč pro vynucení re-renderu celého formu
@@ -88,11 +89,71 @@ export default function CalculatorPage() {
             const alu = formData[`${part.id}Alu`];
             const lak = formData[`${part.id}Lak`];
 
-            baseSum += calculatePartPrice(count, diam, part.category, alu, lak);
+            baseSum += calculateDentPrice(count, diam, part.category, alu, lak);
         });
         // Přidáme 2% režii
         const total = Math.round(baseSum * 1.02);
         return { total };
+    };
+
+    const getRealPartPrices = () => {
+        // 1. Nejdříve spočítáme základní ceny pro všechny díly
+        const calculatedParts = CAR_PARTS.map((part) => {
+            const count = parseInt(formData[`${part.id}Count`]) || 0;
+            const diameter = formData[`${part.id}Diameter`];
+            const isAlu = formData[`${part.id}Alu`];
+            const isLak = formData[`${part.id}Lak`];
+
+            const basePrice = calculateDentPrice(count, diameter, isAlu, isLak);
+            return { id: part.id, basePrice };
+        });
+
+        // 2. Najdeme nejvyšší základní cenu
+        const maxBasePrice = Math.max(
+            ...calculatedParts.map((p) => p.basePrice)
+        );
+
+        // Identifikujeme první výskyt nejdražšího dílu (pro případ, že mají dva stejnou cenu)
+        let foundWinner = false;
+
+        // 3. Vytvoříme mapu reálných cen
+        const realPricesMap = {};
+        calculatedParts.forEach((part) => {
+            if (part.basePrice > 0) {
+                if (part.basePrice === maxBasePrice && !foundWinner) {
+                    realPricesMap[part.id] = part.basePrice; // 100%
+                    foundWinner = true;
+                } else {
+                    realPricesMap[part.id] = Math.round(part.basePrice * 0.5); // 50%
+                }
+            } else {
+                realPricesMap[part.id] = 0;
+            }
+        });
+
+        return realPricesMap;
+    };
+
+    // Tuto mapu si pak vytvoříš před renderováním
+    const realPartPrices = getRealPartPrices();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => {
+            const newState = { ...prev, [name]: value };
+
+            // Zálohujeme jen pokud už máme aspoň kousek SPZ
+            if (newState.vehicleSPZ) {
+                saveToBackup(newState.vehicleSPZ.trim(), newState);
+            }
+
+            return newState;
+        });
+    };
+
+    const handleCheckboxChange = (e) => {
+        const { name, checked } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: checked }));
     };
 
     const pricing = getPricing();
@@ -227,101 +288,21 @@ export default function CalculatorPage() {
                     <h2 className="font-bold text-maingreen border-b pb-2 uppercase text-xl ">
                         Opravované díly
                     </h2>
-                    {CAR_PARTS.map((part) => {
-                        const price = calculatePartPrice(
-                            parseInt(formData[`${part.id}Count`]) || 0,
-                            formData[`${part.id}Diameter`],
-                            part.category,
-                            formData[`${part.id}Alu`],
-                            formData[`${part.id}Lak`],
-                            formData[`${part.id}Vymena`]
-                        );
-
-                        return (
-                            <div
-                                key={part.id}
-                                className={`flex flex-row flex-wrap -mx-3 border-b transition-colors ${
-                                    price > 0
-                                        ? 'bg-green-50'
-                                        : 'hover:bg-slate-50 opacity-60'
-                                }`}
-                            >
-                                <div className="w-full flex justify-between px-4 py-2 items-center font-bold text-gray-700 uppercase">
-                                    {part.label}
-                                    <div className="py-0 px-2 text-right normal-case font-black bg-maingreen rounded-xl text-white">
-                                        {price > 0
-                                            ? `${price.toLocaleString()} Kč`
-                                            : '-'}
-                                    </div>
-                                </div>
-                                <div className="w-1/2 py-2 px-4">
-                                    <input
-                                        type="number"
-                                        name={`${part.id}Count`}
-                                        value={formData[`${part.id}Count`] ?? 0}
-                                        onChange={handleFieldChange}
-                                        className="w-full border rounded-md p-0 text-center font-bold"
-                                    />
-                                </div>
-                                <div className="w-1/2 py-2 px-4">
-                                    <select
-                                        name={`${part.id}Diameter`}
-                                        value={
-                                            formData[`${part.id}Diameter`] ?? ''
-                                        }
-                                        onChange={handleFieldChange}
-                                        className="w-full border rounded-md font-bold bg-white"
-                                    >
-                                        <option value="">-</option>
-                                        <option value="20">20mm</option>
-                                        <option value="30">30mm</option>
-                                        <option value="40">40mm</option>
-                                    </select>
-                                </div>
-                                <div className="p-4 flex flex-row justify-between w-full mt-2">
-                                    <label className="flex items-center gap-1.5 text-sm font-black text-maingreen">
-                                        <input
-                                            type="checkbox"
-                                            name={`${part.id}Alu`}
-                                            checked={
-                                                formData[`${part.id}Alu`] ||
-                                                false
-                                            }
-                                            onChange={handleFieldChange}
-                                            className="w-4 h-4 rounded border-gray-300"
-                                        />{' '}
-                                        Hliník (+ 20 %)
-                                    </label>
-                                    <label className="flex items-center gap-1.5 text-sm font-black text-maingreen">
-                                        <input
-                                            type="checkbox"
-                                            name={`${part.id}Lak`}
-                                            checked={
-                                                formData[`${part.id}Lak`] ||
-                                                false
-                                            }
-                                            onChange={handleFieldChange}
-                                            className="w-4 h-4 rounded border-gray-300"
-                                        />{' '}
-                                        Lakování
-                                    </label>
-                                    <label className="flex items-center gap-1.5 text-sm font-black text-maingreen">
-                                        <input
-                                            type="checkbox"
-                                            name={`${part.id}Vymena`}
-                                            checked={
-                                                formData[`${part.id}Vymena`] ||
-                                                false
-                                            }
-                                            onChange={handleFieldChange}
-                                            className="w-4 h-4 rounded border-gray-300"
-                                        />{' '}
-                                        Výměna
-                                    </label>
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {CAR_PARTS.map((part) => (
+                        <FormPart
+                            key={part.id}
+                            id={part.id}
+                            label={part.label}
+                            category={part.category}
+                            formData={formData}
+                            onImageChange={() => {}}
+                            onChange={handleChange}
+                            onCheckboxChange={handleCheckboxChange}
+                            onRemoveImage={() => {}}
+                            realPrice={realPartPrices[part.id] || 0}
+                            hidePhotos={true}
+                        />
+                    ))}
                 </div>
 
                 {/* ACTION BAR */}
