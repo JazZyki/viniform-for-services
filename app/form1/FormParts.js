@@ -12,6 +12,7 @@ export default function FormPart({
     onRemoveImage,
     onChange,
     onCheckboxChange,
+    realPrice,
 }) {
     const images = formData[id] || [];
     const filledImages = images.filter((img) => img instanceof File);
@@ -25,7 +26,6 @@ export default function FormPart({
     const currentPrice = calculateDentPrice(
         count,
         diameter,
-        category,
         formData[`${id}Alu`],
         formData[`${id}Lak`]
     );
@@ -36,19 +36,36 @@ export default function FormPart({
 
     return (
         <div className="form-field border-b pb-6 mb-6 bg-gray-50 p-4 rounded-xl shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-                <p className="font-bold text-lg uppercase text-maingreen">
-                    {label}
-                </p>
-                {hasNoImage && (
-                    <span className="text-[#8f2215] text-[10px] font-black uppercase tracking-tighter">
-                        ⚠ Povinná fotografie dílu
-                    </span>
-                )}
+            <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-col gap-1">
+                    <p className="font-bold text-lg uppercase text-maingreen">
+                        {label}
+                    </p>
+                    {hasNoImage && (
+                        <span className="text-[#8f2215] text-[10px] font-black uppercase tracking-tighter">
+                            ⚠ Povinná fotografie dílu
+                        </span>
+                    )}
+                </div>
                 {isAdminOrEditor && currentPrice > 0 && (
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold border border-green-200">
-                        {currentPrice.toLocaleString()} Kč
-                    </span>
+                    <div className="flex flex-col items-end">
+                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold border border-green-200">
+                            Reálná cena: {realPrice.toLocaleString()} Kč
+                        </span>
+                        {/* Volitelně můžeš ukázat, že je tam sleva */}
+                        {formData[`${id}Count`] > 0 &&
+                            realPrice <
+                                calculateDentPrice(
+                                    parseInt(formData[`${id}Count`]),
+                                    formData[`${id}Diameter`],
+                                    formData[`${id}Alu`],
+                                    formData[`${id}Lak`]
+                                ) && (
+                                <span className="text-[10px] text-red-500 font-bold uppercase mt-1">
+                                    Aktivována sleva 50%
+                                </span>
+                            )}
+                    </div>
                 )}
             </div>
 

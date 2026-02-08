@@ -1,24 +1,25 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import PWAWrapper from "../../components/PWAWrapper";
-import { loginAction } from "../actions/auth";
-import { USER_ROLES } from "../config";
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import PWAWrapper from '../../components/PWAWrapper';
+import { loginAction } from '../actions/auth';
+import { USER_ROLES } from '../config';
+import Footer from '../../components/Footer';
 
 export default function LoginPage() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
     const router = useRouter();
 
     const handleLogin = async () => {
         const result = await loginAction(username, password);
-        
+
         if (result.success) {
-            localStorage.setItem("username", result.username);
-            const role = USER_ROLES[result.username] || "user";
-            localStorage.setItem("userRole", role);
-            router.push("/splitter");
+            localStorage.setItem('username', result.username);
+            const role = USER_ROLES[result.username] || 'user';
+            localStorage.setItem('userRole', role);
+            router.push('/splitter');
         } else {
             alert(result.error);
         }
@@ -44,13 +45,14 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
-                <button 
+                <button
                     className="block mt-4 btn btn-primary w-full"
                     onClick={handleLogin}
                 >
                     Přihlásit se
                 </button>
             </div>
+            <Footer />
         </PWAWrapper>
     );
 }

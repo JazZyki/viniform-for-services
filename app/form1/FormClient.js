@@ -316,23 +316,75 @@ export default function FormPage({ initialTechnician }) {
         }
     };
 
-    const getGrandTotal = () => {
-        let baseSum = 0;
-        CAR_PARTS.forEach((part) => {
-            // TADY byla asi chyba - musíš použít part.id, ne jen id
+    // Pomocná funkce pro určení reálných cen jednotlivých dílů
+    const getRealPartPrices = () => {
+        // 1. Nejdříve spočítáme základní ceny pro všechny díly
+        const calculatedParts = CAR_PARTS.map((part) => {
             const count = parseInt(formData[`${part.id}Count`]) || 0;
             const diameter = formData[`${part.id}Diameter`];
+            const isAlu = formData[`${part.id}Alu`];
+            const isLak = formData[`${part.id}Lak`];
 
-            const partPrice = calculateDentPrice(
-                count,
-                diameter,
-                part.category, // oprava z category na part.category
-                formData[`${part.id}Alu`],
-                formData[`${part.id}Lak`]
-            );
-
-            baseSum += partPrice;
+            const basePrice = calculateDentPrice(count, diameter, isAlu, isLak);
+            return { id: part.id, basePrice };
         });
+
+        // 2. Najdeme nejvyšší základní cenu
+        const maxBasePrice = Math.max(
+            ...calculatedParts.map((p) => p.basePrice)
+        );
+
+        // Identifikujeme první výskyt nejdražšího dílu (pro případ, že mají dva stejnou cenu)
+        let foundWinner = false;
+
+        // 3. Vytvoříme mapu reálných cen
+        const realPricesMap = {};
+        calculatedParts.forEach((part) => {
+            if (part.basePrice > 0) {
+                if (part.basePrice === maxBasePrice && !foundWinner) {
+                    realPricesMap[part.id] = part.basePrice; // 100%
+                    foundWinner = true;
+                } else {
+                    realPricesMap[part.id] = Math.round(part.basePrice * 0.5); // 50%
+                }
+            } else {
+                realPricesMap[part.id] = 0;
+            }
+        });
+
+        return realPricesMap;
+    };
+
+    // Tuto mapu si pak vytvoříš před renderováním
+    const realPartPrices = getRealPartPrices();
+
+    const getGrandTotal = () => {
+        // 1. Sesbíráme ceny všech opravovaných dílů
+        let partPrices = [];
+
+        CAR_PARTS.forEach((part) => {
+            const count = parseInt(formData[`${part.id}Count`]) || 0;
+            const diameter = formData[`${part.id}Diameter`];
+            const isAlu = formData[`${part.id}Alu`];
+            const isLak = formData[`${part.id}Lak`];
+
+            const price = calculateDentPrice(count, diameter, isAlu, isLak);
+
+            if (price > 0) {
+                partPrices.push(price);
+            }
+        });
+
+        if (partPrices.length === 0) return { base: 0, fee: 0, total: 0 };
+
+        // 2. Seřadíme od nejdražšího po nejlevnější
+        partPrices.sort((a, b) => b - a);
+
+        // 3. Nejdražší díl je za 100%, všechny ostatní díly za 50%
+        let baseSum = partPrices[0];
+        for (let i = 1; i < partPrices.length; i++) {
+            baseSum += partPrices[i] * 0.5;
+        }
 
         const fee = baseSum * 0.02;
         return {
@@ -930,6 +982,7 @@ export default function FormPage({ initialTechnician }) {
                                 onChange={handleChange}
                                 onCheckboxChange={handleCheckboxChange}
                                 onRemoveImage={removeImage}
+                                realPrice={realPartPrices[part.id] || 0}
                             />
                         ))}
 

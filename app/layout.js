@@ -1,6 +1,5 @@
 import '../styles/global.scss';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 
 const APP_NAME = 'Viniform4services';
 const APP_DEFAULT_TITLE = 'ViniForm - Zakázkový list';
@@ -64,10 +63,9 @@ export default function RootLayout({ children }) {
                             Zakázkový list
                         </h1>
                     </div>
-                    <div className="p-4 relative">
+                    <div className="p-4">
                         <Header />
                         {children}
-                        <Footer />
                     </div>
                 </div>
             </body>
