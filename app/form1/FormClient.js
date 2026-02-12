@@ -516,7 +516,7 @@ export default function FormPage({ initialTechnician }) {
         };
     };
 
-    const isStep1Valid = () => {
+    /*const isStep1Valid = () => {
         const requiredFields = [
             'vehicleBrand',
             'vehicleType',
@@ -566,7 +566,7 @@ export default function FormPage({ initialTechnician }) {
             const images = formData[part.id] || [];
             return images.some((img) => img instanceof File);
         });
-    };
+    };*/
 
     // Načtení historie při kliknutí na tlačítko
     const handleLoadHistory = async () => {
@@ -588,7 +588,7 @@ export default function FormPage({ initialTechnician }) {
         }
     };
 
-    const handleImport = (e) => {
+    /*const handleImport = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -609,7 +609,7 @@ export default function FormPage({ initialTechnician }) {
             }
         };
         reader.readAsText(file);
-    };
+    };*/
 
     const isSpzReady = formData.vehicleSPZ?.trim().length >= 3;
 
@@ -730,7 +730,7 @@ export default function FormPage({ initialTechnician }) {
                                         options={VEHICLE_BRANDS}
                                         value={formData.vehicleBrand}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                         placeholder="Vyberte..."
                                     />
@@ -739,7 +739,7 @@ export default function FormPage({ initialTechnician }) {
                                         name="vehicleType"
                                         value={formData.vehicleType}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                     />
                                     <FormInput
@@ -747,7 +747,7 @@ export default function FormPage({ initialTechnician }) {
                                         name="vehicleVIN"
                                         value={formData.vehicleVIN}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                     />
                                     <FormInput
@@ -755,7 +755,7 @@ export default function FormPage({ initialTechnician }) {
                                         name="vehicleColor"
                                         value={formData.vehicleColor}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                     />
                                     <FormInput
@@ -763,7 +763,7 @@ export default function FormPage({ initialTechnician }) {
                                         name="vehicleYear"
                                         value={formData.vehicleYear}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                     />
                                     <FormInput
@@ -788,7 +788,7 @@ export default function FormPage({ initialTechnician }) {
                                         name="customerName"
                                         value={formData.customerName}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                     />
                                     <FormInput
@@ -804,7 +804,7 @@ export default function FormPage({ initialTechnician }) {
                                         name="customerAddress"
                                         value={formData.customerAddress}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                         fullWidth={true}
                                     />
@@ -828,7 +828,7 @@ export default function FormPage({ initialTechnician }) {
                                         ]}
                                         value={formData.insuranceCompany}
                                         onChange={handleChange}
-                                        required
+                                        //required
                                         disabled={!isSpzReady}
                                         placeholder="Vyberte..."
                                     />
@@ -1097,20 +1097,22 @@ export default function FormPage({ initialTechnician }) {
 
                     <button
                         type="submit"
-                        disabled={
+                        /*disabled={
                             loading ||
                             (step === 1 && !isStep1Valid()) ||
                             (step === 2 && !isStep2Valid()) ||
                             (step === 3 && !isStep3Valid())
-                        }
-                        className={`btn flex-1 font-bold text-white rounded ${
+                        }*/
+                        className={
+                            `btn flex-1 font-bold text-white rounded bg-[#168E33] hover:bg-[#12752a] ` /*${
                             loading ||
                             (step === 2 && !isStep2Valid()) ||
                             (step === 1 && !isStep1Valid()) ||
                             (step === 3 && !isStep3Valid())
                                 ? 'bg-gray-400 cursor-not-allowed'
                                 : 'bg-[#168E33] hover:bg-[#12752a]'
-                        }`}
+                        }`*/
+                        }
                     >
                         {loading
                             ? 'Generuji...'
