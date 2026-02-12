@@ -9,7 +9,12 @@ import Popup from 'reactjs-popup';
 import SignatureCanvas from 'react-signature-canvas';
 import { robotoBase64 } from '../../lib/fonts/Roboto-Condensed-normal';
 import { calculateDentPrice } from '../../lib/priceCalculator';
-import { CAR_PARTS, VEHICLE_BRANDS, DENT_DIAMETERS } from './config';
+import {
+    CAR_PARTS,
+    VEHICLE_BRANDS,
+    DENT_DIAMETERS,
+    ADDITIONAL_DAMAGES,
+} from './config';
 import FormPart from './FormParts';
 import {
     saveToBackup,
@@ -95,7 +100,7 @@ export default function FormPage({ initialTechnician }) {
         };
 
         // Krok 3: Dynamické díly
-        CAR_PARTS.forEach((part) => {
+        [...CAR_PARTS, ...ADDITIONAL_DAMAGES].forEach((part) => {
             state[part.id] = Array(10).fill('');
             state[`${part.id}Count`] = 0;
             state[`${part.id}Diameter`] = '';
@@ -110,6 +115,7 @@ export default function FormPage({ initialTechnician }) {
 
     useEffect(() => {
         async function initApp() {
+            if (typeof window === 'undefined') return;
             // Nejprve vyčistíme staré věci
             await autoCleanup();
 
@@ -315,15 +321,22 @@ export default function FormPage({ initialTechnician }) {
     // Pomocná funkce pro určení reálných cen jednotlivých dílů
     const getRealPartPrices = () => {
         // 1. Nejdříve spočítáme základní ceny pro všechny díly
-        const calculatedParts = CAR_PARTS.map((part) => {
-            const count = parseInt(formData[`${part.id}Count`]) || 0;
-            const diameter = formData[`${part.id}Diameter`];
-            const isAlu = formData[`${part.id}Alu`];
-            const isLak = formData[`${part.id}Lak`];
+        const calculatedParts = [...CAR_PARTS, ...ADDITIONAL_DAMAGES].map(
+            (part) => {
+                const count = parseInt(formData[`${part.id}Count`]) || 0;
+                const diameter = formData[`${part.id}Diameter`];
+                const isAlu = formData[`${part.id}Alu`];
+                const isLak = formData[`${part.id}Lak`];
 
-            const basePrice = calculateDentPrice(count, diameter, isAlu, isLak);
-            return { id: part.id, basePrice };
-        });
+                const basePrice = calculateDentPrice(
+                    count,
+                    diameter,
+                    isAlu,
+                    isLak
+                );
+                return { id: part.id, basePrice };
+            }
+        );
 
         // 2. Najdeme nejvyšší základní cenu
         const maxBasePrice = Math.max(
@@ -358,7 +371,7 @@ export default function FormPage({ initialTechnician }) {
         // 1. Sesbíráme ceny všech opravovaných dílů
         let partPrices = [];
 
-        CAR_PARTS.forEach((part) => {
+        [...CAR_PARTS, ...ADDITIONAL_DAMAGES].forEach((part) => {
             const count = parseInt(formData[`${part.id}Count`]) || 0;
             const diameter = formData[`${part.id}Diameter`];
             const isAlu = formData[`${part.id}Alu`];
@@ -400,6 +413,14 @@ export default function FormPage({ initialTechnician }) {
             return;
         }
 
+        const activeDamages = [...CAR_PARTS, ...ADDITIONAL_DAMAGES].filter(
+            (part) => {
+                const count = parseInt(formData[`${part.id}Count`]) || 0;
+                const price = realPartPrices[part.id] || 0;
+                return count > 0 && price > 0;
+            }
+        );
+
         setLoading(true);
         const filename = `${formData.vehicleSPZ}_${formData.customerName}`;
         const doc = new jsPDF();
@@ -440,7 +461,7 @@ export default function FormPage({ initialTechnician }) {
             });
 
             // Dynamické vykreslení dílů z config.js
-            CAR_PARTS.forEach((part) => {
+            /*CAR_PARTS.forEach((part) => {
                 const count = formData[`${part.id}Count`];
                 const diam = formData[`${part.id}Diameter`];
                 if (count > 0) doc.text(`${count}`, part.x, part.y);
@@ -460,7 +481,120 @@ export default function FormPage({ initialTechnician }) {
                     60
                 );
                 doc.text(splitNotes, 134, 137);
-            }
+            }*/
+
+            // --- DYNAMICKÁ TABULKA POŠKOZENÍ ---
+            let currentY = 125;
+            const startX = 14; // Zarovnáme k levému okraji (nebo tvých 50, pokud chceš odsazení)
+            const col = {
+                label: 40,
+                count: 10,
+                diam: 20,
+                lak: 15,
+                alu: 15,
+                vym: 15,
+            };
+
+            // 1. Hlavička tabulky
+            doc.setFont('RobotoCustom', 'normal'); // jsPDF někdy zlobí s 'bold', pokud není v base64 i tučná varianta
+            doc.setFontSize(10);
+            doc.setTextColor(50, 50, 50); // Tmavě šedá pro hlavičku
+            doc.text('DÍL', startX, currentY);
+            doc.text('KS', startX + col.label, currentY);
+            doc.text('PRŮMĚR', startX + col.label + col.count, currentY);
+            doc.text(
+                'LAK',
+                startX + col.label + col.count + col.diam,
+                currentY
+            );
+            doc.text(
+                'ALU',
+                startX + col.label + col.count + col.diam + col.lak,
+                currentY
+            );
+            doc.text(
+                'VÝMĚNA',
+                startX + col.label + col.count + col.diam + col.lak + col.alu,
+                currentY
+            );
+
+            // Čára pod hlavičkou
+            currentY += 1.5;
+            doc.setLineWidth(0.6); // Nastavení tloušťky čáry (cca 2px v jspdf jednotkách)
+            doc.setDrawColor(22, 142, 51); // Barva maingreen
+            doc.line(
+                startX,
+                currentY,
+                startX +
+                    col.label +
+                    col.count +
+                    col.diam +
+                    col.lak +
+                    col.alu +
+                    col.vym,
+                currentY
+            );
+            currentY += 6.5; // Posun na první řádek dat
+
+            // 2. Výpis aktivních položek
+            doc.setFont('RobotoCustom', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0); // Černá pro data
+            doc.setDrawColor(200, 200, 200); // Světle šedá pro řádky
+
+            activeDamages.forEach((part) => {
+                const count = formData[`${part.id}Count`];
+                const diam = formData[`${part.id}Diameter`] || '-';
+                const lak = formData[`${part.id}Lak`] ? 'ANO' : 'NE';
+                const alu = formData[`${part.id}Alu`] ? 'ANO' : 'NE';
+                const vym = formData[`${part.id}Vymena`] ? 'ANO' : 'NE';
+
+                // Vykreslení textů
+                doc.text(`${part.label}`, startX, currentY);
+                doc.text(`${count}`, startX + col.label, currentY);
+                doc.text(
+                    `${diam} mm`,
+                    startX + col.label + col.count,
+                    currentY
+                );
+                doc.text(
+                    `${lak}`,
+                    startX + col.label + col.count + col.diam,
+                    currentY
+                );
+                doc.text(
+                    `${alu}`,
+                    startX + col.label + col.count + col.diam + col.lak,
+                    currentY
+                );
+                doc.text(
+                    `${vym}`,
+                    startX +
+                        col.label +
+                        col.count +
+                        col.diam +
+                        col.lak +
+                        col.alu,
+                    currentY
+                );
+
+                // Čára pod každým řádkem (1px border)
+                currentY += 1.5;
+                doc.line(
+                    startX,
+                    currentY,
+                    startX +
+                        col.label +
+                        col.count +
+                        col.diam +
+                        col.lak +
+                        col.alu +
+                        col.vym,
+                    currentY
+                );
+
+                currentY += 6.5; // Posun na další řádek
+            });
 
             const pdfBlob = doc.output('blob');
             const zip = new JSZip();
@@ -482,6 +616,7 @@ export default function FormPage({ initialTechnician }) {
                 'tachometr',
                 'interier',
                 ...CAR_PARTS.map((p) => p.id),
+                ...ADDITIONAL_DAMAGES.map((d) => d.id),
             ];
 
             for (const field of photoFields) {
@@ -961,7 +1096,7 @@ export default function FormPage({ initialTechnician }) {
                 )}
 
                 {step === 3 && (
-                    <div className="space-y-4">
+                    <div className="space-y-8">
                         <img
                             src="/auto_details.svg"
                             alt="Auto detaily"
@@ -981,6 +1116,52 @@ export default function FormPage({ initialTechnician }) {
                                 realPrice={realPartPrices[part.id] || 0}
                             />
                         ))}
+
+                        <div className="mt-10 pt-10 border-t-4 border-slate-100">
+                            <h3 className="text-xl font-black text-slate-400 uppercase mb-6 text-center">
+                                Další specifická poškození
+                            </h3>
+
+                            {ADDITIONAL_DAMAGES.map((part, index) => {
+                                // Logika zobrazení:
+                                // Zobrazíme první (index 0) VŽDY.
+                                // Ostatní zobrazíme jen pokud má PŘEDCHOZÍ pole vyplněný alespoň počet důlků (> 0)
+                                const isVisible =
+                                    index === 0 ||
+                                    parseInt(
+                                        formData[
+                                            `${
+                                                ADDITIONAL_DAMAGES[index - 1].id
+                                            }Count`
+                                        ]
+                                    ) > 0;
+
+                                if (!isVisible) return null;
+
+                                return (
+                                    <div
+                                        key={part.id}
+                                        className="animate-in fade-in slide-in-from-top-2 duration-300"
+                                    >
+                                        <FormPart
+                                            id={part.id}
+                                            label={part.label}
+                                            category={part.category}
+                                            formData={formData}
+                                            onImageChange={handleImageChange}
+                                            onChange={handleChange}
+                                            onCheckboxChange={
+                                                handleCheckboxChange
+                                            }
+                                            onRemoveImage={removeImage}
+                                            realPrice={
+                                                realPartPrices[part.id] || 0
+                                            }
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
 
                         <div className="mt-8 bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <label className="block">

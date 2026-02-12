@@ -148,8 +148,20 @@ export const VEHICLE_BRANDS = [
     'Jiné - upřesním níže',
 ];
 
-// app/form-pomackliny/config.js
 export const DENT_DIAMETERS = [
     20, 30, 40, 60, 80, 100, 130, 160, 190, 220, 250, 280, 310, 340, 370, 400,
     430, 460, 490, 520, 550, 580, 610, 640, 670, 700,
+];
+
+export const ADDITIONAL_DAMAGES = [
+    { id: 'extra1', label: 'Další poškození 1', category: 'extra' },
+    { id: 'extra2', label: 'Další poškození 2', category: 'extra' },
+    { id: 'extra3', label: 'Další poškození 3', category: 'extra' },
+    { id: 'extra4', label: 'Další poškození 4', category: 'extra' },
+    { id: 'extra5', label: 'Další poškození 5', category: 'extra' },
+    { id: 'extra6', label: 'Další poškození 6', category: 'extra' },
+    { id: 'extra7', label: 'Další poškození 7', category: 'extra' },
+    { id: 'extra8', label: 'Další poškození 8', category: 'extra' },
+    { id: 'extra9', label: 'Další poškození 9', category: 'extra' },
+    { id: 'extra10', label: 'Další poškození 10', category: 'extra' },
 ];
