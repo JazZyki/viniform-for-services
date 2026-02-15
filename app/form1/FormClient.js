@@ -104,6 +104,8 @@ export default function FormPage({ initialTechnician }) {
             state[part.id] = Array(10).fill('');
             state[`${part.id}Count`] = 0;
             state[`${part.id}Diameter`] = '';
+            state[`${part.Id}Count2`] = 0;
+            state[`${part.id}Diameter`] = '';
             state[`${part.id}Lak`] = false;
             state[`${part.id}Vymena`] = false;
         });
@@ -166,11 +168,18 @@ export default function FormPage({ initialTechnician }) {
 
     // Handlery
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => {
-            const newState = { ...prev, [name]: value };
+        const { name, value, type } = e.target;
+        let finalValue = value;
 
-            // Zálohujeme jen pokud už máme aspoň kousek SPZ
+        if (type === 'number') {
+            // 1. Odstraníme úvodní nuly pomocí parseInt a převedeme zpět na string nebo číslo
+            // 2. Pokud je pole prázdné, nastavíme 0
+            finalValue = value === '' ? 0 : parseInt(value, 10);
+        }
+
+        setFormData((prev) => {
+            const newState = { ...prev, [name]: finalValue };
+
             if (newState.vehicleSPZ) {
                 saveToBackup(newState.vehicleSPZ.trim(), newState);
             }
@@ -320,44 +329,47 @@ export default function FormPage({ initialTechnician }) {
 
     // Pomocná funkce pro určení reálných cen jednotlivých dílů
     const getRealPartPrices = () => {
-        // 1. Nejdříve spočítáme základní ceny pro všechny díly
-        const calculatedParts = [...CAR_PARTS, ...ADDITIONAL_DAMAGES].map(
-            (part) => {
-                const count = parseInt(formData[`${part.id}Count`]) || 0;
-                const diameter = formData[`${part.id}Diameter`];
-                const isAlu = formData[`${part.id}Alu`];
-                const isLak = formData[`${part.id}Lak`];
+        // 1. Spočítáme základní (plné) ceny pro všechny existující díly
+        const allPossibleParts = [...CAR_PARTS, ...ADDITIONAL_DAMAGES];
 
-                const basePrice = calculateDentPrice(
-                    count,
-                    diameter,
-                    isAlu,
-                    isLak
-                );
-                return { id: part.id, basePrice };
-            }
-        );
+        const calculatedParts = allPossibleParts.map((part) => {
+            const count = parseInt(formData[`${part.id}Count`]) || 0;
+            const diameter = formData[`${part.id}Diameter`];
+            const count2 = parseInt(formData[`${part.id}Count2`]) || 0;
+            const diameter2 = formData[`${part.id}Diameter2`];
+            const isAlu = formData[`${part.id}Alu`];
+            const isLak = formData[`${part.id}Lak`];
 
-        // 2. Najdeme nejvyšší základní cenu
-        const maxBasePrice = Math.max(
-            ...calculatedParts.map((p) => p.basePrice)
-        );
+            const basePrice = calculateDentPrice(
+                count,
+                diameter,
+                count2,
+                diameter2,
+                isAlu,
+                isLak
+            );
+            return { id: part.id, basePrice };
+        });
 
-        // Identifikujeme první výskyt nejdražšího dílu (pro případ, že mají dva stejnou cenu)
-        let foundWinner = false;
+        // 2. Odfiltrujeme jen díly, které mají nějakou cenu, a seřadíme je od nejdražšího
+        const activeParts = calculatedParts
+            .filter((p) => p.basePrice > 0)
+            .sort((a, b) => b.basePrice - a.basePrice);
 
         // 3. Vytvoříme mapu reálných cen
         const realPricesMap = {};
-        calculatedParts.forEach((part) => {
-            if (part.basePrice > 0) {
-                if (part.basePrice === maxBasePrice && !foundWinner) {
-                    realPricesMap[part.id] = part.basePrice; // 100%
-                    foundWinner = true;
-                } else {
-                    realPricesMap[part.id] = Math.round(part.basePrice * 0.5); // 50%
-                }
+
+        // Všechny díly nastavíme na 0 jako základ
+        allPossibleParts.forEach((p) => (realPricesMap[p.id] = 0));
+
+        // Aplikujeme pravidlo 100% pro první a 50% pro ostatní
+        activeParts.forEach((part, index) => {
+            if (index === 0) {
+                // Absolutně nejdražší díl
+                realPricesMap[part.id] = part.basePrice;
             } else {
-                realPricesMap[part.id] = 0;
+                // Všechny ostatní (druhý, třetí, desátý...)
+                realPricesMap[part.id] = Math.round(part.basePrice * 0.5);
             }
         });
 
@@ -368,32 +380,13 @@ export default function FormPage({ initialTechnician }) {
     const realPartPrices = getRealPartPrices();
 
     const getGrandTotal = () => {
-        // 1. Sesbíráme ceny všech opravovaných dílů
-        let partPrices = [];
+        // Sčítáme hodnoty z naší mapy reálných cen
+        const baseSum = Object.values(realPartPrices).reduce(
+            (sum, price) => sum + price,
+            0
+        );
 
-        [...CAR_PARTS, ...ADDITIONAL_DAMAGES].forEach((part) => {
-            const count = parseInt(formData[`${part.id}Count`]) || 0;
-            const diameter = formData[`${part.id}Diameter`];
-            const isAlu = formData[`${part.id}Alu`];
-            const isLak = formData[`${part.id}Lak`];
-
-            const price = calculateDentPrice(count, diameter, isAlu, isLak);
-
-            if (price > 0) {
-                partPrices.push(price);
-            }
-        });
-
-        if (partPrices.length === 0) return { base: 0, fee: 0, total: 0 };
-
-        // 2. Seřadíme od nejdražšího po nejlevnější
-        partPrices.sort((a, b) => b - a);
-
-        // 3. Nejdražší díl je za 100%, všechny ostatní díly za 50%
-        let baseSum = partPrices[0];
-        for (let i = 1; i < partPrices.length; i++) {
-            baseSum += partPrices[i] * 0.5;
-        }
+        if (baseSum === 0) return { base: 0, fee: 0, total: 0 };
 
         const fee = baseSum * 0.02;
         return {
@@ -404,6 +397,16 @@ export default function FormPage({ initialTechnician }) {
     };
 
     const pricing = getGrandTotal();
+
+    const formatCzechDate = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('cs-CZ', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -442,33 +445,31 @@ export default function FormPage({ initialTechnician }) {
             // Mapování textů do PDF (Dle tvých pozic)
             const txtPos = {
                 technician: [133, 246],
-                customerName: [14, 52],
-                customerPhone: [122, 52],
-                vehicleBrand: [14, 65],
-                vehicleType: [65, 65],
-                vehicleSPZ: [122, 65],
-                vehicleVIN: [14, 80],
-                vehicleDistance: [107, 80],
-                vehicleYear: [136, 80],
-                vehicleColor: [165, 80],
-                insuranceCompany: [14, 93],
-                insuranceNumber: [88, 93],
-                serviceDate: [154, 93],
+                customerName: [14, 51],
+                customerPhone: [122, 51],
+                customerAddress: [14, 65],
+                vehicleBrand: [14, 78],
+                vehicleType: [65, 78],
+                vehicleSPZ: [122, 78],
+                vehicleVIN: [14, 92],
+                vehicleDistance: [107, 92],
+                vehicleYear: [136, 92],
+                vehicleColor: [167, 92],
+                insuranceCompany: [14, 107],
+                insuranceNumber: [88, 107],
+                serviceDate: [154, 107],
             };
 
             Object.entries(txtPos).forEach(([key, [x, y]]) => {
-                if (formData[key]) doc.text(`${formData[key]}`, x, y);
-            });
+                if (formData[key]) {
+                    // Pokud jde o datum, zformátujeme ho, jinak necháme původní text
+                    const valueToDisplay =
+                        key === 'serviceDate'
+                            ? formatCzechDate(formData[key])
+                            : formData[key];
 
-            // Dynamické vykreslení dílů z config.js
-            /*CAR_PARTS.forEach((part) => {
-                const count = formData[`${part.id}Count`];
-                const diam = formData[`${part.id}Diameter`];
-                if (count > 0) doc.text(`${count}`, part.x, part.y);
-                if (diam) doc.text(`${diam}`, part.x + 25, part.y);
-                if (formData[`${part.id}Lak`]) doc.text('X', part.lakX, part.y);
-                if (formData[`${part.id}Vymena`])
-                    doc.text('X', part.vymenaX, part.y);
+                    doc.text(`${valueToDisplay}`, x, y);
+                }
             });
 
             if (formData.signatureImage)
@@ -480,8 +481,8 @@ export default function FormPage({ initialTechnician }) {
                     formData.detailNotes,
                     60
                 );
-                doc.text(splitNotes, 134, 137);
-            }*/
+                doc.text(splitNotes, 134, 125);
+            }
 
             // --- DYNAMICKÁ TABULKA POŠKOZENÍ ---
             let currentY = 125;
@@ -543,20 +544,20 @@ export default function FormPage({ initialTechnician }) {
             doc.setDrawColor(200, 200, 200); // Světle šedá pro řádky
 
             activeDamages.forEach((part) => {
-                const count = formData[`${part.id}Count`];
-                const diam = formData[`${part.id}Diameter`] || '-';
+                const count1 = formData[`${part.id}Count`] || 0;
+                const diam1 = formData[`${part.id}Diameter`] || '-';
+                const count2 = formData[`${part.id}Count2`] || 0;
+                const diam2 = formData[`${part.id}Diameter2`] || '';
+
                 const lak = formData[`${part.id}Lak`] ? 'ANO' : 'NE';
                 const alu = formData[`${part.id}Alu`] ? 'ANO' : 'NE';
                 const vym = formData[`${part.id}Vymena`] ? 'ANO' : 'NE';
 
-                // Vykreslení textů
+                // Pomocná proměnná pro zjištění, jestli máme dva řádky dat
+                const hasSecondRow = count2 > 0 && diam2 !== '';
+
+                // Vykreslení Labelu, Laku, Alu a Výměny (ty jsou pro díl společné)
                 doc.text(`${part.label}`, startX, currentY);
-                doc.text(`${count}`, startX + col.label, currentY);
-                doc.text(
-                    `${diam} mm`,
-                    startX + col.label + col.count,
-                    currentY
-                );
                 doc.text(
                     `${lak}`,
                     startX + col.label + col.count + col.diam,
@@ -578,8 +579,33 @@ export default function FormPage({ initialTechnician }) {
                     currentY
                 );
 
-                // Čára pod každým řádkem (1px border)
+                // Vykreslení prvního řádku KS a PRŮMĚR
+                doc.text(`${count1}`, startX + col.label, currentY);
+                doc.text(
+                    `${diam1} mm`,
+                    startX + col.label + col.count,
+                    currentY
+                );
+
+                if (hasSecondRow) {
+                    // Posuneme se o kousek níž pro druhý řádek v rámci téhož dílu
+                    currentY += 4.5;
+
+                    // Vykreslení druhého řádku KS a PRŮMĚR
+                    doc.text(`${count2}`, startX + col.label, currentY);
+                    doc.text(
+                        `${diam2} mm`,
+                        startX + col.label + col.count,
+                        currentY
+                    );
+
+                    // Přidáme malý posun, aby border nebyl nalepený na textu
+                    currentY += 1;
+                }
+
+                // Čára pod celým blokem dílu
                 currentY += 1.5;
+                doc.setLineWidth(0.1);
                 doc.line(
                     startX,
                     currentY,
@@ -593,7 +619,8 @@ export default function FormPage({ initialTechnician }) {
                     currentY
                 );
 
-                currentY += 6.5; // Posun na další řádek
+                // Posun na další díl (pokud byl dvouřádkový, posuneme o něco méně, už jsme klesli)
+                currentY += hasSecondRow ? 5.5 : 6.5;
             });
 
             const pdfBlob = doc.output('blob');

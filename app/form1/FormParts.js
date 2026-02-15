@@ -26,10 +26,14 @@ export default function FormPart({
 
     const count = parseInt(formData[`${id}Count`]) || 0;
     const diameter = formData[`${id}Diameter`];
+    const count2 = parseInt(formData[`${id}Count2`]) || 0;
+    const diameter2 = formData[`${id}Diameter2`];
 
     const currentPrice = calculateDentPrice(
         count,
         diameter,
+        count2,
+        diameter2,
         formData[`${id}Alu`],
         formData[`${id}Lak`]
     );
@@ -42,7 +46,7 @@ export default function FormPart({
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex justify-between items-center cursor-pointer"
             >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
                     {/* Šipka indikující stav */}
                     <span
                         className={`text-maingreen transition-transform duration-300 ${
@@ -53,7 +57,7 @@ export default function FormPart({
                     </span>
                     <div className="flex flex-col gap-0.5">
                         <p
-                            className={`font-bold uppercase tracking-tight ${
+                            className={`font-bold uppercase tracking-tighter ${
                                 count > 0 ? 'text-maingreen' : 'text-gray-600'
                             }`}
                         >
@@ -62,7 +66,7 @@ export default function FormPart({
                     </div>
                 </div>
                 {currentPrice > 0 && (
-                    <div className="flex flex-col items-end min-w-[160px] relative">
+                    <div className="flex flex-col items-end min-w-[170px] relative">
                         <span className="absolute bottom-4  px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold border border-green-200">
                             Orient. cena: {realPrice.toLocaleString()} Kč
                         </span>
@@ -142,40 +146,82 @@ export default function FormPart({
                     )}
 
                     {/* Parametry dílu */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <label>
-                            <span className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                                Počet důlků
-                            </span>
-                            <input
-                                type="number"
-                                name={`${id}Count`}
-                                value={formData[`${id}Count`] || 0}
-                                onChange={onChange}
-                                className="w-full p-2 border rounded-lg bg-white h-[42px]"
-                                min="0"
-                            />
-                        </label>
-                        <label>
-                            <span className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                                Průměr
-                            </span>
-                            <select
-                                name={`${id}Diameter`}
-                                value={formData[`${id}Diameter`] || ''}
-                                onChange={onChange}
-                                className="w-full p-2 border rounded-lg bg-white h-[42px]"
-                            >
-                                <option value="" disabled>
-                                    Vyberte...
-                                </option>
-                                {DENT_DIAMETERS.map((d) => (
-                                    <option key={d} value={d}>
-                                        {d} mm
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                    <div className="space-y-4">
+                        {/* První řádek (vždy viditelný) */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <label>
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                    Počet (1)
+                                </span>
+                                <input
+                                    type="number"
+                                    name={`${id}Count`}
+                                    value={Number(
+                                        formData[`${id}Count`]
+                                    ).toString()}
+                                    onChange={onChange}
+                                    className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    onFocus={(e) =>
+                                        e.target.value === '0' &&
+                                        (e.target.value = '')
+                                    } // Bonus: při kliku zmizí nula
+                                />
+                            </label>
+                            <label>
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                    Průměr (1)
+                                </span>
+                                <select
+                                    name={`${id}Diameter`}
+                                    value={formData[`${id}Diameter`] || ''}
+                                    onChange={onChange}
+                                    className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                >
+                                    <option value="">-</option>
+                                    {DENT_DIAMETERS.map((d) => (
+                                        <option key={d} value={d}>
+                                            {d} mm
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+
+                        {/* Druhý řádek (viditelný pouze pokud je vyplněn první) */}
+                        {count > 0 && diameter !== '' && (
+                            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Počet (2)
+                                    </span>
+                                    <input
+                                        type="number"
+                                        name={`${id}Count2`}
+                                        value={formData[`${id}Count2`] || 0}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    />
+                                </label>
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Průměr (2)
+                                    </span>
+                                    <select
+                                        name={`${id}Diameter2`}
+                                        value={formData[`${id}Diameter2`] || ''}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    >
+                                        <option value="">-</option>
+                                        {DENT_DIAMETERS.map((d) => (
+                                            <option key={d} value={d}>
+                                                {d} mm
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+                        )}
                     </div>
 
                     {/* Checkboxy - v jedné řadě pro úsporu místa */}
