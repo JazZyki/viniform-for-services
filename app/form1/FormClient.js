@@ -14,7 +14,9 @@ import {
     VEHICLE_BRANDS,
     DENT_DIAMETERS,
     ADDITIONAL_DAMAGES,
+    USER_ROLES,
 } from './config';
+
 import FormPart from './FormParts';
 import {
     saveToBackup,
@@ -27,6 +29,7 @@ import {
 import { keys, get, del } from 'idb-keyval';
 import { FormInput } from './FormInput';
 import { ImagePreview } from './ImagePreview';
+import { getConfigForUser } from './config';
 
 export default function FormPage({ initialTechnician }) {
     const FIELD_LABELS = {
@@ -60,6 +63,9 @@ export default function FormPage({ initialTechnician }) {
         const state = {
             // Krok 1: Údaje
             technician: '',
+            technicianName: '',
+            technicianPhone: '',
+            technicianMail: '',
             vehicleBrand: '',
             vehicleType: '',
             vehicleSPZ: '',
@@ -114,6 +120,7 @@ export default function FormPage({ initialTechnician }) {
     };
 
     const [formData, setFormData] = useState(createInitialState());
+    const userConfig = getConfigForUser(formData.technician);
 
     useEffect(() => {
         async function initApp() {
@@ -431,61 +438,65 @@ export default function FormPage({ initialTechnician }) {
         doc.addFont('Roboto-Condensed.ttf', 'RobotoCustom', 'normal');
 
         const backgroundImage = new Image();
-        backgroundImage.src = '/zakazkovy_list.jpg';
+        backgroundImage.src = userConfig.pdfBackground;
         const pricing = getGrandTotal();
 
         backgroundImage.onload = async () => {
             doc.addImage(backgroundImage, 'PNG', 0, 0, 210, 297);
 
             doc.setFont('RobotoCustom');
-            doc.setFontSize(13); // Nastav velikost písma
+            doc.setFontSize(11); // Nastav velikost písma
 
-            doc.text(`${pricing.total.toLocaleString()} Kč`, 14, 246);
+            const [tpX, tpY] = userConfig.totalPricePos;
+            doc.text(`${pricing.total.toLocaleString()} Kč`, tpX, tpY);
 
-            // Mapování textů do PDF (Dle tvých pozic)
-            const txtPos = {
-                technician: [133, 246],
-                customerName: [14, 51],
-                customerPhone: [122, 51],
-                customerAddress: [14, 65],
-                vehicleBrand: [14, 78],
-                vehicleType: [65, 78],
-                vehicleSPZ: [122, 78],
-                vehicleVIN: [14, 92],
-                vehicleDistance: [107, 92],
-                vehicleYear: [136, 92],
-                vehicleColor: [167, 92],
-                insuranceCompany: [14, 107],
-                insuranceNumber: [88, 107],
-                serviceDate: [154, 107],
-            };
+            Object.entries(userConfig.txtPos).forEach(([key, [x, y]]) => {
+                // Vykreslíme, pokud máme data a pole není skryté
+                if (formData[key] && !userConfig.hiddenFields.includes(key)) {
+                    let valueToDisplay = formData[key];
 
-            Object.entries(txtPos).forEach(([key, [x, y]]) => {
-                if (formData[key]) {
-                    // Pokud jde o datum, zformátujeme ho, jinak necháme původní text
-                    const valueToDisplay =
-                        key === 'serviceDate'
-                            ? formatCzechDate(formData[key])
-                            : formData[key];
+                    if (key === 'serviceDate')
+                        valueToDisplay = formatCzechDate(formData[key]);
 
-                    doc.text(`${valueToDisplay}`, x, y);
+                    // Detailní poznámky potřebují zalamování (Notes)
+                    if (key === 'notes' && formData.detailNotes) {
+                        const splitNotes = doc.splitTextToSize(
+                            formData.detailNotes,
+                            60
+                        );
+                        doc.text(splitNotes, x, y);
+                    } else if (key !== 'notes') {
+                        doc.text(`${valueToDisplay}`, x, y);
+                    }
                 }
             });
 
-            if (formData.signatureImage)
-                doc.addImage(formData.signatureImage, 'PNG', 35, 266, 50, 20);
+            if (userConfig.showExtraContact) {
+                if (formData.technicianPhone)
+                    doc.text(`Tel: ${formData.technicianPhone}`, 133, 251);
+                if (formData.technicianMail)
+                    doc.text(`Email: ${formData.technicianMail}`, 133, 256);
+                if (formData.technicianName)
+                    doc.text(`${formData.technicianName}`, 133, 247);
+            }
 
+            if (formData.signatureImage) {
+                const [sX, sY, sW, sH] = userConfig.signaturePos;
+                doc.addImage(formData.signatureImage, 'PNG', sX, sY, sW, sH);
+            }
+
+            const notePos = userConfig.txtPos.notes || [134, 107];
             // Poznámky (splitTextToSize pro zalomení řádků)
             if (formData.detailNotes) {
                 const splitNotes = doc.splitTextToSize(
                     formData.detailNotes,
                     60
                 );
-                doc.text(splitNotes, 134, 125);
+                doc.text(splitNotes, notePos[0], notePos[1]);
             }
 
             // --- DYNAMICKÁ TABULKA POŠKOZENÍ ---
-            let currentY = 125;
+            let currentY = userConfig.tableStartY; // Začínáme na pozici z configu
             const startX = 14; // Zarovnáme k levému okraji (nebo tvých 50, pokud chceš odsazení)
             const col = {
                 label: 40,
@@ -878,6 +889,37 @@ export default function FormPage({ initialTechnician }) {
                                         readOnly
                                         disabled={true}
                                     />
+                                    {userConfig.showExtraContact && (
+                                        <>
+                                            <FormInput
+                                                label="Jméno technika"
+                                                name="technicianName"
+                                                value={
+                                                    formData.technicianName ||
+                                                    ''
+                                                }
+                                                onChange={handleChange}
+                                            />
+                                            <FormInput
+                                                label="Telefon technika"
+                                                name="technicianPhone"
+                                                value={
+                                                    formData.technicianPhone ||
+                                                    ''
+                                                }
+                                                onChange={handleChange}
+                                            />
+                                            <FormInput
+                                                label="Email technika"
+                                                name="technicianMail"
+                                                value={
+                                                    formData.technicianMail ||
+                                                    ''
+                                                }
+                                                onChange={handleChange}
+                                            />
+                                        </>
+                                    )}
                                     <FormInput
                                         label="SPZ"
                                         name="vehicleSPZ"
@@ -885,58 +927,82 @@ export default function FormPage({ initialTechnician }) {
                                         onChange={handleChange}
                                         required
                                     />
-                                    <FormInput
-                                        label="Značka vozidla"
-                                        name="vehicleBrand"
-                                        type="select"
-                                        options={VEHICLE_BRANDS}
-                                        value={formData.vehicleBrand}
-                                        onChange={handleChange}
-                                        //required
-                                        disabled={!isSpzReady}
-                                        placeholder="Vyberte..."
-                                    />
-                                    <FormInput
-                                        label="Model (Druh)"
-                                        name="vehicleType"
-                                        value={formData.vehicleType}
-                                        onChange={handleChange}
-                                        //required
-                                        disabled={!isSpzReady}
-                                    />
-                                    <FormInput
-                                        label="VIN"
-                                        name="vehicleVIN"
-                                        value={formData.vehicleVIN}
-                                        onChange={handleChange}
-                                        //required
-                                        disabled={!isSpzReady}
-                                    />
-                                    <FormInput
-                                        label="Barva"
-                                        name="vehicleColor"
-                                        value={formData.vehicleColor}
-                                        onChange={handleChange}
-                                        //required
-                                        disabled={!isSpzReady}
-                                    />
-                                    <FormInput
-                                        label="Rok výroby"
-                                        name="vehicleYear"
-                                        value={formData.vehicleYear}
-                                        onChange={handleChange}
-                                        //required
-                                        disabled={!isSpzReady}
-                                    />
-                                    <FormInput
-                                        label="Stav tachometru (km)"
-                                        name="vehicleDistance"
-                                        type="number"
-                                        value={formData.vehicleDistance}
-                                        onChange={handleChange}
-                                        //required
-                                        disabled={!isSpzReady}
-                                    />
+                                    {!userConfig.hiddenFields.includes(
+                                        'vehicleBrand'
+                                    ) && (
+                                        <FormInput
+                                            label="Značka vozidla"
+                                            name="vehicleBrand"
+                                            type="select"
+                                            options={VEHICLE_BRANDS}
+                                            value={formData.vehicleBrand}
+                                            onChange={handleChange}
+                                            //required
+                                            disabled={!isSpzReady}
+                                            placeholder="Vyberte..."
+                                        />
+                                    )}
+                                    {!userConfig.hiddenFields.includes(
+                                        'vehicleType'
+                                    ) && (
+                                        <FormInput
+                                            label="Model (Druh)"
+                                            name="vehicleType"
+                                            value={formData.vehicleType}
+                                            onChange={handleChange}
+                                            //required
+                                            disabled={!isSpzReady}
+                                        />
+                                    )}
+                                    {!userConfig.hiddenFields.includes(
+                                        'vehicleVIN'
+                                    ) && (
+                                        <FormInput
+                                            label="VIN"
+                                            name="vehicleVIN"
+                                            value={formData.vehicleVIN}
+                                            onChange={handleChange}
+                                            //required
+                                            disabled={!isSpzReady}
+                                        />
+                                    )}
+                                    {!userConfig.hiddenFields.includes(
+                                        'vehicleColor'
+                                    ) && (
+                                        <FormInput
+                                            label="Barva"
+                                            name="vehicleColor"
+                                            value={formData.vehicleColor}
+                                            onChange={handleChange}
+                                            //required
+                                            disabled={!isSpzReady}
+                                        />
+                                    )}
+                                    {!userConfig.hiddenFields.includes(
+                                        'vehicleYear'
+                                    ) && (
+                                        <FormInput
+                                            label="Rok výroby"
+                                            name="vehicleYear"
+                                            value={formData.vehicleYear}
+                                            onChange={handleChange}
+                                            //required
+                                            disabled={!isSpzReady}
+                                        />
+                                    )}
+                                    {!userConfig.hiddenFields.includes(
+                                        'vehicleDistance'
+                                    ) && (
+                                        <FormInput
+                                            label="Stav tachometru (km)"
+                                            name="vehicleDistance"
+                                            type="number"
+                                            value={formData.vehicleDistance}
+                                            onChange={handleChange}
+                                            //required
+                                            disabled={!isSpzReady}
+                                        />
+                                    )}
                                 </div>
                             </div>
 
@@ -974,20 +1040,7 @@ export default function FormPage({ initialTechnician }) {
                                         label="Pojišťovna"
                                         name="insuranceCompany"
                                         type="select"
-                                        options={[
-                                            'Allianz',
-                                            'AXA',
-                                            'ČPP',
-                                            'ČSOB Pojišťovna',
-                                            'Direct',
-                                            'Generali',
-                                            'Kooperativa',
-                                            'Pillow',
-                                            'Servisní pojišťovna',
-                                            'Slavia',
-                                            'VZP',
-                                            'Ostatní',
-                                        ]}
+                                        options={userConfig.insurers}
                                         value={formData.insuranceCompany}
                                         onChange={handleChange}
                                         //required
@@ -1036,6 +1089,8 @@ export default function FormPage({ initialTechnician }) {
                                     filledPhotos.length + 1,
                                     3
                                 );
+                                const isRequired =
+                                    userConfig.requiredPhotos.includes(field);
 
                                 return (
                                     <div
@@ -1046,7 +1101,7 @@ export default function FormPage({ initialTechnician }) {
                                             <p className="font-bold text-lg uppercase text-maingreen pb-1">
                                                 {FIELD_LABELS[field]}
                                             </p>
-                                            {hasNoImage && (
+                                            {hasNoImage && isRequired && (
                                                 <span className="text-[#8f2215] text-[10px] font-black uppercase tracking-tighter">
                                                     ⚠ Povinná fotografie
                                                 </span>

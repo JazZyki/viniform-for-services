@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import PWAWrapper from '../../components/PWAWrapper';
 import { loginAction } from '../actions/auth';
-import { USER_ROLES } from '../config';
+import { ROLES } from '../config';
 import Footer from '../../components/Footer';
 
 export default function LoginPage() {
@@ -17,7 +17,8 @@ export default function LoginPage() {
 
         if (result.success) {
             localStorage.setItem('username', result.username);
-            const role = USER_ROLES[result.username] || 'user';
+            const role = ROLES[result.username] || 'user';
+            console.log('Přiřazená role:', role);
             localStorage.setItem('userRole', role);
             router.push('/splitter');
         } else {
