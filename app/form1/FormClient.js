@@ -1077,102 +1077,116 @@ export default function FormPage({ initialTechnician }) {
                             className="w-full max-w-sm mx-auto"
                         />
                         <div className="space-y-4">
-                            {Object.keys(FIELD_LABELS).map((field) => {
-                                const photos = formData[field] || [];
-                                // Filtrujeme jen ty, co jsou soubory
-                                const filledPhotos = photos.filter(
-                                    (img) => img instanceof File
-                                );
-                                const hasNoImage = filledPhotos.length === 0;
-                                // Zobrazíme buď všechny nahrané + 1 volný slot, nebo max 3
-                                const visibleCount = Math.min(
-                                    filledPhotos.length + 1,
-                                    3
-                                );
-                                const isRequired =
-                                    userConfig.requiredPhotos.includes(field);
+                            {Object.keys(FIELD_LABELS)
+                                .filter((field) => {
+                                    if (
+                                        !userConfig.hiddenFields.length &&
+                                        userConfig.requiredPhotos.lenth > 10
+                                    )
+                                        return true; // Pokud není žádné pole skryté a máme hodně povinných fotek, zobrazíme všechny
+                                    return userConfig.requiredPhotos.includes(
+                                        field
+                                    );
+                                })
+                                .map((field) => {
+                                    const photos = formData[field] || [];
+                                    // Filtrujeme jen ty, co jsou soubory
+                                    const filledPhotos = photos.filter(
+                                        (img) => img instanceof File
+                                    );
+                                    const hasNoImage =
+                                        filledPhotos.length === 0;
+                                    // Zobrazíme buď všechny nahrané + 1 volný slot, nebo max 3
+                                    const visibleCount = Math.min(
+                                        filledPhotos.length + 1,
+                                        3
+                                    );
+                                    const isRequired =
+                                        userConfig.requiredPhotos.includes(
+                                            field
+                                        );
 
-                                return (
-                                    <div
-                                        key={field}
-                                        className="border p-4 rounded-md border-secondarygreen bg-gray-50 shadow-sm mb-4"
-                                    >
-                                        <div className="mb-4 flex items-center justify-between">
-                                            <p className="font-bold text-lg uppercase text-maingreen pb-1">
-                                                {FIELD_LABELS[field]}
-                                            </p>
-                                            {hasNoImage && isRequired && (
-                                                <span className="text-[#8f2215] text-[10px] font-black uppercase tracking-tighter">
-                                                    ⚠ Povinná fotografie
-                                                </span>
-                                            )}
-                                        </div>
+                                    return (
+                                        <div
+                                            key={field}
+                                            className="border p-4 rounded-md border-secondarygreen bg-gray-50 shadow-sm mb-4"
+                                        >
+                                            <div className="mb-4 flex items-center justify-between">
+                                                <p className="font-bold text-lg uppercase text-maingreen pb-1">
+                                                    {FIELD_LABELS[field]}
+                                                </p>
+                                                {hasNoImage && isRequired && (
+                                                    <span className="text-[#8f2215] text-[10px] font-black uppercase tracking-tighter">
+                                                        ⚠ Povinná fotografie
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                        <div className="grid grid-cols-3 gap-4 items-end">
-                                            {[...Array(visibleCount)].map(
-                                                (_, i) => {
-                                                    const currentFile =
-                                                        photos[i];
-                                                    const isFile =
-                                                        currentFile instanceof
-                                                        File;
+                                            <div className="grid grid-cols-3 gap-4 items-end">
+                                                {[...Array(visibleCount)].map(
+                                                    (_, i) => {
+                                                        const currentFile =
+                                                            photos[i];
+                                                        const isFile =
+                                                            currentFile instanceof
+                                                            File;
 
-                                                    return (
-                                                        <div
-                                                            key={i}
-                                                            className="flex flex-col gap-2"
-                                                        >
-                                                            {isFile ? (
-                                                                // POKUD FOTKA JE: Ukážeme náhled
-                                                                <ImagePreview
-                                                                    file={
-                                                                        currentFile
-                                                                    }
-                                                                    onRemove={() =>
-                                                                        removeImage(
-                                                                            field,
-                                                                            i
-                                                                        )
-                                                                    } // Použije nový asynchronní handler
-                                                                />
-                                                            ) : (
-                                                                // POKUD FOTKA NENÍ: Ukážeme input
-                                                                <div className="w-full col-span-3">
-                                                                    <label className="w-full h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-white hover:border-maingreen cursor-pointer transition-colors">
-                                                                        <span className="text-2xl text-gray-400">
-                                                                            +
-                                                                        </span>
-                                                                        <span className="text-[10px] text-gray-400 font-bold">
-                                                                            FOTO
-                                                                        </span>
-                                                                        <input
-                                                                            type="file"
-                                                                            accept="image/*;capture=camera"
-                                                                            className="hidden"
-                                                                            //capture="camera"
-                                                                            onChange={(
-                                                                                e
-                                                                            ) =>
-                                                                                handleImageChange(
-                                                                                    field,
-                                                                                    i,
+                                                        return (
+                                                            <div
+                                                                key={i}
+                                                                className="flex flex-col gap-2"
+                                                            >
+                                                                {isFile ? (
+                                                                    // POKUD FOTKA JE: Ukážeme náhled
+                                                                    <ImagePreview
+                                                                        file={
+                                                                            currentFile
+                                                                        }
+                                                                        onRemove={() =>
+                                                                            removeImage(
+                                                                                field,
+                                                                                i
+                                                                            )
+                                                                        } // Použije nový asynchronní handler
+                                                                    />
+                                                                ) : (
+                                                                    // POKUD FOTKA NENÍ: Ukážeme input
+                                                                    <div className="w-full col-span-3">
+                                                                        <label className="w-full h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-white hover:border-maingreen cursor-pointer transition-colors">
+                                                                            <span className="text-2xl text-gray-400">
+                                                                                +
+                                                                            </span>
+                                                                            <span className="text-[10px] text-gray-400 font-bold">
+                                                                                FOTO
+                                                                            </span>
+                                                                            <input
+                                                                                type="file"
+                                                                                accept="image/*;capture=camera"
+                                                                                className="hidden"
+                                                                                //capture="camera"
+                                                                                onChange={(
                                                                                     e
-                                                                                        .target
-                                                                                        .files[0]
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    </label>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                }
-                                            )}
+                                                                                ) =>
+                                                                                    handleImageChange(
+                                                                                        field,
+                                                                                        i,
+                                                                                        e
+                                                                                            .target
+                                                                                            .files[0]
+                                                                                    )
+                                                                                }
+                                                                            />
+                                                                        </label>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    }
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
                         </div>
                     </div>
                 )}
