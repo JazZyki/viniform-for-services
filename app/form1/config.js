@@ -322,8 +322,9 @@ export const USER_ROLES = {
     OLCservis: CBAUTO_CONFIG,
     SUMPservis: CBAUTO_CONFIG,
     Autosklo: CBAUTO_CONFIG,
-    Uniqua: CBAUTO_CONFIG,
+    Uniqa: CBAUTO_CONFIG,
     Direct: CBAUTO_CONFIG,
+    Pillow: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {

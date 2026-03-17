@@ -6,6 +6,7 @@ export const ROLES = {
     Global: 'admin',
     Autosklo: 'editor',
     Uniqa: 'editor',
+    Pillow: 'editor',
     Direct: 'editor',
     Talafova: 'editor',
     Hlavsova: 'editor',
