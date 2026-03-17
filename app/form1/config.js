@@ -321,6 +321,9 @@ export const USER_ROLES = {
     TBRservis: CBAUTO_CONFIG,
     OLCservis: CBAUTO_CONFIG,
     SUMPservis: CBAUTO_CONFIG,
+    Autosklo: CBAUTO_CONFIG,
+    Uniqua: CBAUTO_CONFIG,
+    Direct: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {
