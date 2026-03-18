@@ -10,6 +10,8 @@ export const ROLES = {
     Direct: 'editor',
     AUTOUH: 'editor',
     AUTONORD: 'editor',
+    DIRECTAUTO: 'editor',
+    BIRNE: 'editor',
     Talafova: 'editor',
     Hlavsova: 'editor',
     Horynova: 'editor',

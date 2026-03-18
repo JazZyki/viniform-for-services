@@ -327,6 +327,8 @@ export const USER_ROLES = {
     Pillow: CBAUTO_CONFIG,
     AUTOUH: CBAUTO_CONFIG,
     AUTONORD: CBAUTO_CONFIG,
+    DIRECTAUTO: CBAUTO_CONFIG,
+    BIRNE: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {
