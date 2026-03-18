@@ -8,6 +8,8 @@ export const ROLES = {
     Uniqa: 'editor',
     Pillow: 'editor',
     Direct: 'editor',
+    AUTOUH: 'editor',
+    AUTONORD: 'editor',
     Talafova: 'editor',
     Hlavsova: 'editor',
     Horynova: 'editor',
