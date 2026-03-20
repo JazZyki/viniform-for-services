@@ -330,6 +330,9 @@ export const USER_ROLES = {
     DIRECTAUTO: CBAUTO_CONFIG,
     BIRNE: CBAUTO_CONFIG,
     ALLIANZ: CBAUTO_CONFIG,
+    AUTOLEAS: CBAUTO_CONFIG,
+    DASPOL: CBAUTO_CONFIG,
+    BOB: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {
