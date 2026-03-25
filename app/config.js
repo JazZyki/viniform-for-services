@@ -28,5 +28,6 @@ export const ROLES = {
     TBRservis: 'editor',
     OLCservis: 'editor',
     SUMPservis: 'editor',
+    DOLAK: 'editor',
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };
