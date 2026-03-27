@@ -29,5 +29,6 @@ export const ROLES = {
     OLCservis: 'editor',
     SUMPservis: 'editor',
     DOLAK: 'editor',
+    KACMACEK: 'editor',
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };

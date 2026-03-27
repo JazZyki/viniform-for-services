@@ -337,6 +337,7 @@ export const USER_ROLES = {
     BUSINESS: CBAUTO_CONFIG,
     CSOB: CBAUTO_CONFIG,
     DOLAK: CBAUTO_CONFIG,
+    KACMACEK: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {
