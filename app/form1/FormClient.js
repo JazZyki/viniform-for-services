@@ -30,6 +30,7 @@ import { keys, get, del } from 'idb-keyval';
 import { FormInput } from './FormInput';
 import { ImagePreview } from './ImagePreview';
 import { getConfigForUser } from './config';
+import Image from 'next/image';
 
 export default function FormPage({ initialTechnician }) {
     const FIELD_LABELS = {
@@ -86,6 +87,8 @@ export default function FormPage({ initialTechnician }) {
             signatureImage: null,
             globalPhotographyNotes: '',
             globalPhotographyNotes2: '',
+            submissionMethod: 'download',
+            additionalEmail: '',
 
             // Krok 2: Globální fotky
             zapisOPoskozeni: Array(3).fill(''),
@@ -432,7 +435,8 @@ export default function FormPage({ initialTechnician }) {
         );
 
         setLoading(true);
-        const filename = `${formData.vehicleSPZ}_${formData.customerName}`;
+        const filename = `${formData.vehicleSPZ || 'zakazka'}_${formData.customerName || 'bez-jmena'}`;
+
         const doc = new jsPDF();
         doc.addFileToVFS('Roboto-Condensed.ttf', robotoBase64);
         doc.addFont('Roboto-Condensed.ttf', 'RobotoCustom', 'normal');
@@ -638,52 +642,63 @@ export default function FormPage({ initialTechnician }) {
             const zip = new JSZip();
             zip.file(`${filename}.pdf`, pdfBlob);
 
-            // Fotky do ZIPu
             const photoFields = [
-                'zapisOPoskozeni',
-                'pohledZePredu',
-                'pohledZePreduZleva',
-                'pohledZleva',
-                'pohledZezaduZleva',
-                'pohledZezadu',
-                'pohledZezaduZprava',
-                'pohledZprava',
-                'pohledZepreduZprava',
-                'STK',
-                'VIN',
-                'tachometr',
-                'interier',
+                'zapisOPoskozeni', 'pohledZePredu', 'pohledZePreduZleva', 'pohledZleva',
+                'pohledZezaduZleva', 'pohledZezadu', 'pohledZezaduZprava', 'pohledZprava',
+                'pohledZepreduZprava', 'STK', 'VIN', 'tachometr', 'interier',
                 ...CAR_PARTS.map((p) => p.id),
                 ...ADDITIONAL_DAMAGES.map((d) => d.id),
             ];
 
             for (const field of photoFields) {
-                for (let i = 0; i < formData[field].length; i++) {
-                    const img = formData[field][i];
-                    if (img instanceof File) {
-                        zip.file(`${field}_${i + 1}.jpg`, img);
+                if (formData[field]) {
+                    for (let i = 0; i < formData[field].length; i++) {
+                        const img = formData[field][i];
+                        if (img instanceof File) {
+                            zip.file(`${field}_${i + 1}.jpg`, img);
+                        }
                     }
                 }
             }
 
             const zipBlob = await zip.generateAsync({ type: 'blob' });
-            saveAs(zipBlob, `${filename}.zip`);
-            const finalSPZ = formData.vehicleSPZ.trim();
-            if (finalSPZ) {
-                await finalizeOrder(finalSPZ, formData);
-            } else {
-                await clearAllDrafts();
-            }
-            setLoading(false);
 
+            // 3. ROZHODNUTÍ PODLE METODY ODESLÁNÍ
+            if (formData.submissionMethod === 'download') {
+                saveAs(zipBlob, `${filename}.zip`);
+                alert('Soubor ZIP byl stažen do vašeho zařízení.');
+            } else {
+                try {
+                    const emailFormData = new FormData();
+                    emailFormData.append('file', zipBlob, `${filename}.zip`);
+                    emailFormData.append('spz', formData.vehicleSPZ);
+                    emailFormData.append('customer', formData.customerName);
+                    emailFormData.append('technicianEmail', 'wp.zykl@gmail.com');
+                    emailFormData.append('ccEmail', formData.additionalEmail || '');
+
+                    const res = await fetch('/api/send-order', {
+                        method: 'POST',
+                        body: emailFormData,
+                    });
+
+                    if (!res.ok) throw new Error('Chyba při odesílání.');
+                    alert('Zakázka byla úspěšně odeslána e-mailem.');
+                } catch (err) {
+                    alert('E-mail se nepodařilo odeslat. Zkuste soubor stáhnout ručně.');
+                    setLoading(false);
+                    return; 
+                }
+            }
+
+            // 4. FINÁLNÍ UKONČENÍ
+            const finalSPZ = formData.vehicleSPZ?.trim();
+            if (finalSPZ) await finalizeOrder(finalSPZ, formData);
+            
+            setLoading(false);
             setTimeout(() => {
-                alert(
-                    'Hotovo! Zakázka byla uložena do archivu, kde bude následujícíh 30 dní a soubor ZIP je stažen do Vašeho zařízení.'
-                );
                 setFormData(createInitialState());
                 setStep(1);
                 setSignatureImage(null);
-
                 router.push('/splitter');
             }, 1000);
         };
@@ -1356,6 +1371,83 @@ export default function FormPage({ initialTechnician }) {
                                     </span>
                                 </div>
                             </div>
+                        </div>
+                        <div className="mt-8 p-6 bg-slate-50 rounded-xl border-2 border-slate-200">
+                            <h3 className="text-lg font-bold text-gray-700 mb-4 uppercase tracking-tight text-center">
+                                Jak chcete zakázku dokončit?
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            submissionMethod: 'download',
+                                        }))
+                                    }
+                                    className={`p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all ${
+                                        formData.submissionMethod === 'download'
+                                            ? 'border-maingreen bg-green-50'
+                                            : 'border-gray-200 bg-white opacity-60'
+                                    }`}
+                                >
+                                    <span className="text-2xl">
+                                        <Image 
+                                        src="/download.svg"
+                                        alt="Email"
+                                        width={32}
+                                        height={32}
+                                    />
+                                    </span>
+                                    <span className="font-bold text-sm uppercase">
+                                        Stáhnout do mobilu
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            submissionMethod: 'email',
+                                        }))
+                                    }
+                                    className={`p-4 rounded-lg border-2 flex flex-col justify-center items-center gap-2 transition-all ${
+                                        formData.submissionMethod === 'email'
+                                            ? 'border-maingreen bg-green-50'
+                                            : 'border-gray-200 bg-white opacity-60'
+                                    }`}
+                                >
+                                    <span className="text-2xl">
+                                    <Image 
+                                        src="/email.svg"
+                                        alt="Email"
+                                        width={32}
+                                        height={32}
+                                    />
+                                    </span>
+                                    <span className="font-bold text-sm uppercase">
+                                        Odeslat na e-mail
+                                    </span>
+                                </button>
+                            </div>
+
+                            {formData.submissionMethod === 'email' && (
+                                <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                    <FormInput
+                                        label="Poslat kopii na (volitelné):"
+                                        name="additionalEmail"
+                                        type="email"
+                                        placeholder="např. servis@firma.cz"
+                                        value={formData.additionalEmail}
+                                        onChange={handleChange}
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1 italic">
+                                        * ZIP bude odeslán na adresu technika a
+                                        případně na tento e-mail.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
