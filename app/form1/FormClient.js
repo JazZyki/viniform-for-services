@@ -30,7 +30,7 @@ import { keys, get, del } from 'idb-keyval';
 import { FormInput } from './FormInput';
 import { ImagePreview } from './ImagePreview';
 import { getConfigForUser } from './config';
-import Image from 'next/image';
+import NextImage from 'next/image';
 
 export default function FormPage({ initialTechnician }) {
     const FIELD_LABELS = {
@@ -1392,7 +1392,7 @@ export default function FormPage({ initialTechnician }) {
                                     }`}
                                 >
                                     <span className="text-2xl">
-                                        <Image 
+                                        <NextImage 
                                         src="/download.svg"
                                         alt="Email"
                                         width={32}
@@ -1419,7 +1419,7 @@ export default function FormPage({ initialTechnician }) {
                                     }`}
                                 >
                                     <span className="text-2xl">
-                                    <Image 
+                                    <NextImage 
                                         src="/email.svg"
                                         alt="Email"
                                         width={32}
