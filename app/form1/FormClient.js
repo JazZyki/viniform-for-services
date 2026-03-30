@@ -8,7 +8,10 @@ import { saveAs } from 'file-saver';
 import Popup from 'reactjs-popup';
 import SignatureCanvas from 'react-signature-canvas';
 import { robotoBase64 } from '../../lib/fonts/Roboto-Condensed-normal';
-import { calculateDentPrice } from '../../lib/priceCalculator';
+import {
+    calculateDentPrice,
+    calculateGlobalPartCascade,
+} from '../../lib/priceCalculator';
 import {
     CAR_PARTS,
     VEHICLE_BRANDS,
@@ -339,49 +342,48 @@ export default function FormPage({ initialTechnician }) {
 
     // Pomocná funkce pro určení reálných cen jednotlivých dílů
     const getRealPartPrices = () => {
-        // 1. Spočítáme základní (plné) ceny pro všechny existující díly
         const allPossibleParts = [...CAR_PARTS, ...ADDITIONAL_DAMAGES];
 
-        const calculatedParts = allPossibleParts.map((part) => {
-            const count = parseInt(formData[`${part.id}Count`]) || 0;
-            const diameter = formData[`${part.id}Diameter`];
-            const count2 = parseInt(formData[`${part.id}Count2`]) || 0;
-            const diameter2 = formData[`${part.id}Diameter2`];
-            const isAlu = formData[`${part.id}Alu`];
-            const isLak = formData[`${part.id}Lak`];
+        // Detekce Global režimu (můžeš použít i jiný klíč z configu)
+        const isGlobalMode = userConfig.isGlobal === true;
 
+        // 1. Spočítáme základní plné ceny dílů
+        const calculatedParts = allPossibleParts.map((part) => {
             const basePrice = calculateDentPrice(
-                count,
-                diameter,
-                count2,
-                diameter2,
-                isAlu,
-                isLak
+                formData[`${part.id}Count`],
+                formData[`${part.id}Diameter`],
+                formData[`${part.id}Count2`],
+                formData[`${part.id}Diameter2`],
+                formData[`${part.id}Alu`],
+                formData[`${part.id}Lak`],
+                isGlobalMode
             );
             return { id: part.id, basePrice };
         });
 
-        // 2. Odfiltrujeme jen díly, které mají nějakou cenu, a seřadíme je od nejdražšího
+        // 2. Seřadíme aktivní díly od nejdražšího
         const activeParts = calculatedParts
             .filter((p) => p.basePrice > 0)
             .sort((a, b) => b.basePrice - a.basePrice);
 
-        // 3. Vytvoříme mapu reálných cen
         const realPricesMap = {};
-
-        // Všechny díly nastavíme na 0 jako základ
         allPossibleParts.forEach((p) => (realPricesMap[p.id] = 0));
 
-        // Aplikujeme pravidlo 100% pro první a 50% pro ostatní
-        activeParts.forEach((part, index) => {
-            if (index === 0) {
-                // Absolutně nejdražší díl
-                realPricesMap[part.id] = part.basePrice;
-            } else {
-                // Všechny ostatní (druhý, třetí, desátý...)
-                realPricesMap[part.id] = Math.round(part.basePrice * 0.5);
-            }
-        });
+        if (!isGlobalMode) {
+            // STANDARD: 1. díl 100%, ostatní 50% své ceny
+            activeParts.forEach((part, index) => {
+                realPricesMap[part.id] =
+                    index === 0
+                        ? part.basePrice
+                        : Math.round(part.basePrice * 0.5);
+            });
+        } else {
+            // GLOBAL: Kaskádové koeficienty aplikované na cenu konkrétního dílu
+            const results = calculateGlobalPartCascade(activeParts);
+            results.forEach((res) => {
+                realPricesMap[res.id] = res.finalPrice;
+            });
+        }
 
         return realPricesMap;
     };
@@ -435,7 +437,9 @@ export default function FormPage({ initialTechnician }) {
         );
 
         setLoading(true);
-        const filename = `${formData.vehicleSPZ || 'zakazka'}_${formData.customerName || 'bez-jmena'}`;
+        const filename = `${formData.vehicleSPZ || 'zakazka'}_${
+            formData.customerName || 'bez-jmena'
+        }`;
 
         const doc = new jsPDF();
         doc.addFileToVFS('Roboto-Condensed.ttf', robotoBase64);
@@ -643,9 +647,19 @@ export default function FormPage({ initialTechnician }) {
             zip.file(`${filename}.pdf`, pdfBlob);
 
             const photoFields = [
-                'zapisOPoskozeni', 'pohledZePredu', 'pohledZePreduZleva', 'pohledZleva',
-                'pohledZezaduZleva', 'pohledZezadu', 'pohledZezaduZprava', 'pohledZprava',
-                'pohledZepreduZprava', 'STK', 'VIN', 'tachometr', 'interier',
+                'zapisOPoskozeni',
+                'pohledZePredu',
+                'pohledZePreduZleva',
+                'pohledZleva',
+                'pohledZezaduZleva',
+                'pohledZezadu',
+                'pohledZezaduZprava',
+                'pohledZprava',
+                'pohledZepreduZprava',
+                'STK',
+                'VIN',
+                'tachometr',
+                'interier',
                 ...CAR_PARTS.map((p) => p.id),
                 ...ADDITIONAL_DAMAGES.map((d) => d.id),
             ];
@@ -673,8 +687,14 @@ export default function FormPage({ initialTechnician }) {
                     emailFormData.append('file', zipBlob, `${filename}.zip`);
                     emailFormData.append('spz', formData.vehicleSPZ);
                     emailFormData.append('customer', formData.customerName);
-                    emailFormData.append('technicianEmail', 'wp.zykl@gmail.com');
-                    emailFormData.append('ccEmail', formData.additionalEmail || '');
+                    emailFormData.append(
+                        'technicianEmail',
+                        'wp.zykl@gmail.com'
+                    );
+                    emailFormData.append(
+                        'ccEmail',
+                        formData.additionalEmail || ''
+                    );
 
                     const res = await fetch('/api/send-order', {
                         method: 'POST',
@@ -684,16 +704,18 @@ export default function FormPage({ initialTechnician }) {
                     if (!res.ok) throw new Error('Chyba při odesílání.');
                     alert('Zakázka byla úspěšně odeslána e-mailem.');
                 } catch (err) {
-                    alert('E-mail se nepodařilo odeslat. Zkuste soubor stáhnout ručně.');
+                    alert(
+                        'E-mail se nepodařilo odeslat. Zkuste soubor stáhnout ručně.'
+                    );
                     setLoading(false);
-                    return; 
+                    return;
                 }
             }
 
             // 4. FINÁLNÍ UKONČENÍ
             const finalSPZ = formData.vehicleSPZ?.trim();
             if (finalSPZ) await finalizeOrder(finalSPZ, formData);
-            
+
             setLoading(false);
             setTimeout(() => {
                 setFormData(createInitialState());
@@ -1213,30 +1235,51 @@ export default function FormPage({ initialTechnician }) {
                             alt="Auto detaily"
                             className="w-full max-w-sm mx-auto mb-8"
                         />
-                        {CAR_PARTS.map((part) => (
-                            <FormPart
-                                key={part.id}
-                                id={part.id}
-                                label={part.label}
-                                category={part.category}
-                                formData={formData}
-                                onImageChange={handleImageChange}
-                                onChange={handleChange}
-                                onCheckboxChange={handleCheckboxChange}
-                                onRemoveImage={removeImage}
-                                realPrice={realPartPrices[part.id] || 0}
-                            />
-                        ))}
 
+                        {/* 1. STANDARDNÍ DÍLY - Tady byla chyba, chyběl return a správné uzavření */}
+                        {CAR_PARTS.map((part) => {
+                            // Logika pro zjištění pořadí (kvůli badgům)
+                            const activePartsSorted = [
+                                ...CAR_PARTS,
+                                ...ADDITIONAL_DAMAGES,
+                            ]
+                                .map((p) => ({
+                                    id: p.id,
+                                    price: realPartPrices[p.id] || 0,
+                                }))
+                                .filter((p) => p.price > 0)
+                                .sort((a, b) => b.price - a.price);
+
+                            const orderIndex = activePartsSorted.findIndex(
+                                (p) => p.id === part.id
+                            );
+
+                            // Tady MUSÍ být return, aby se komponenta vykreslila
+                            return (
+                                <FormPart
+                                    key={part.id}
+                                    id={part.id}
+                                    label={part.label}
+                                    category={part.category}
+                                    formData={formData}
+                                    onImageChange={handleImageChange}
+                                    onChange={handleChange}
+                                    onCheckboxChange={handleCheckboxChange}
+                                    onRemoveImage={removeImage}
+                                    realPrice={realPartPrices[part.id] || 0}
+                                    damageOrder={orderIndex}
+                                    isGlobalMode={userConfig.isGlobal === true}
+                                />
+                            );
+                        })}
+
+                        {/* 2. SEKCE DALŠÍ SPECIFICKÁ POŠKOZENÍ */}
                         <div className="mt-10 pt-10 border-t-4 border-slate-100">
                             <h3 className="text-xl font-black text-slate-400 uppercase mb-6 text-center">
                                 Další specifická poškození
                             </h3>
 
                             {ADDITIONAL_DAMAGES.map((part, index) => {
-                                // Logika zobrazení:
-                                // Zobrazíme první (index 0) VŽDY.
-                                // Ostatní zobrazíme jen pokud má PŘEDCHOZÍ pole vyplněný alespoň počet důlků (> 0)
                                 const isVisible =
                                     index === 0 ||
                                     parseInt(
@@ -1248,6 +1291,22 @@ export default function FormPage({ initialTechnician }) {
                                     ) > 0;
 
                                 if (!isVisible) return null;
+
+                                // I u doplňkových poškození musíme spočítat orderIndex pro badge
+                                const activePartsSorted = [
+                                    ...CAR_PARTS,
+                                    ...ADDITIONAL_DAMAGES,
+                                ]
+                                    .map((p) => ({
+                                        id: p.id,
+                                        price: realPartPrices[p.id] || 0,
+                                    }))
+                                    .filter((p) => p.price > 0)
+                                    .sort((a, b) => b.price - a.price);
+
+                                const orderIndex = activePartsSorted.findIndex(
+                                    (p) => p.id === part.id
+                                );
 
                                 return (
                                     <div
@@ -1267,6 +1326,10 @@ export default function FormPage({ initialTechnician }) {
                                             onRemoveImage={removeImage}
                                             realPrice={
                                                 realPartPrices[part.id] || 0
+                                            }
+                                            damageOrder={orderIndex}
+                                            isGlobalMode={
+                                                userConfig.isGlobal === true
                                             }
                                         />
                                     </div>
@@ -1392,12 +1455,12 @@ export default function FormPage({ initialTechnician }) {
                                     }`}
                                 >
                                     <span className="text-2xl">
-                                        <NextImage 
-                                        src="/download.svg"
-                                        alt="Email"
-                                        width={32}
-                                        height={32}
-                                    />
+                                        <NextImage
+                                            src="/download.svg"
+                                            alt="Email"
+                                            width={32}
+                                            height={32}
+                                        />
                                     </span>
                                     <span className="font-bold text-sm uppercase">
                                         Stáhnout do mobilu
@@ -1419,12 +1482,12 @@ export default function FormPage({ initialTechnician }) {
                                     }`}
                                 >
                                     <span className="text-2xl">
-                                    <NextImage 
-                                        src="/email.svg"
-                                        alt="Email"
-                                        width={32}
-                                        height={32}
-                                    />
+                                        <NextImage
+                                            src="/email.svg"
+                                            alt="Email"
+                                            width={32}
+                                            height={32}
+                                        />
                                     </span>
                                     <span className="font-bold text-sm uppercase">
                                         Odeslat na e-mail

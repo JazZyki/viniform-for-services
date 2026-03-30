@@ -1,9 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { calculateDentPrice } from '../../lib/priceCalculator';
-import { ImagePreview } from './ImagePreview'; // Importujeme naši novou komponentu
+import { ImagePreview } from './ImagePreview';
 import { DENT_DIAMETERS } from './config';
-import { parse } from 'path';
 
 export default function FormPart({
     id,
@@ -15,6 +14,8 @@ export default function FormPart({
     onCheckboxChange,
     realPrice,
     hidePhotos = false,
+    damageOrder, // Přidáno: index v seřazeném poli (0, 1, 2...)
+    isGlobalMode, // Přidáno: boolean, zda jedeme v Global režimu
 }) {
     const [isOpen, setIsOpen] = useState(
         (parseInt(formData[`${id}Count`]) || 0) > 0
@@ -23,7 +24,6 @@ export default function FormPart({
     const filledImages = images.filter((img) => img instanceof File);
 
     const canAddMore = filledImages.length < 5;
-
     const count = parseInt(formData[`${id}Count`]) || 0;
     const diameter = formData[`${id}Diameter`];
     const count2 = parseInt(formData[`${id}Count2`]) || 0;
@@ -35,10 +35,41 @@ export default function FormPart({
         count2,
         diameter2,
         formData[`${id}Alu`],
-        formData[`${id}Lak`]
+        formData[`${id}Lak`],
+        isGlobalMode // Předáme informaci o ceníku do kalkulátoru
     );
 
     const hasNoImage = filledImages.length === 0;
+
+    // Funkce pro generování textu a barvy Badge
+    const renderOrderBadge = () => {
+        // Pokud díl nemá žádnou cenu nebo nebyl nalezen v pořadí, nic nezobrazíme
+        if (damageOrder === undefined || damageOrder === -1 || realPrice === 0)
+            return null;
+
+        const romanNumerals = ['I.', 'II.', 'III.', 'IV.', 'V.'];
+        let badgeText = '';
+
+        if (isGlobalMode) {
+            // Logika pro GLOBAL: I. až V., pak už zůstává V.
+            badgeText = damageOrder < 5 ? romanNumerals[damageOrder] : 'V.+';
+        } else {
+            // Logika pro BASIC: 100% (I.), pak všechno 50% (II.+)
+            badgeText = damageOrder === 0 ? 'I.' : 'II.+';
+        }
+
+        return (
+            <span
+                className={`absolute -bottom-1 text-[10px] font-black uppercase mt-1 px-2 py-0.5 rounded shadow-sm ${
+                    damageOrder === 0
+                        ? 'bg-maingreen text-white' // První nejdražší je zelený
+                        : 'bg-orange-100 text-orange-700 border border-orange-200' // Ostatní jsou oranžoví
+                }`}
+            >
+                {badgeText} POŠKOZENÍ
+            </span>
+        );
+    };
 
     return (
         <div className="form-field border-b mb-10 bg-gray-50 p-4 rounded-xl shadow-sm transition-all duration-300">
@@ -47,7 +78,6 @@ export default function FormPart({
                 className="flex justify-between items-center cursor-pointer"
             >
                 <div className="flex items-center gap-1">
-                    {/* Šipka indikující stav */}
                     <span
                         className={`text-maingreen transition-transform duration-300 ${
                             isOpen ? 'rotate-0' : '-rotate-90'
@@ -65,43 +95,33 @@ export default function FormPart({
                         </p>
                     </div>
                 </div>
-                {currentPrice > 0 && (
+                {realPrice > 0 && (
                     <div className="flex flex-col items-end min-w-[170px] relative">
-                        <span className="absolute bottom-4  px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold border border-green-200">
-                            Orient. cena: {realPrice.toLocaleString()} Kč
+                        <span className="absolute bottom-4 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold border border-green-200">
+                            Cena: {realPrice.toLocaleString()} Kč
                         </span>
 
-                        {formData[`${id}Count`] > 0 &&
-                            realPrice <
-                                calculateDentPrice(
-                                    parseInt(formData[`${id}Count`]),
-                                    formData[`${id}Diameter`],
-                                    formData[`${id}Alu`],
-                                    formData[`${id}Lak`]
-                                ) && (
-                                <span className="absolute -bottom-1 text-[10px] text-orange-700 font-bold uppercase mt-1">
-                                    Aktivována sleva 50%
-                                </span>
-                            )}
+                        {/* Zde vykreslíme náš nový štítek I., II., III... */}
+                        {renderOrderBadge()}
                     </div>
                 )}
             </div>
 
-            {/* Fotodokumentace - kompaktní zobrazení */}
             {isOpen && (
-                <div>
-                    {!hidePhotos && hasNoImage && count > 0 && (
-                        <span className="text-[#8f2215] text-[9px] font-black uppercase tracking-tighter">
-                            ⚠ Chybí foto
-                        </span>
-                    )}
+                <div className="mt-4 animate-in fade-in duration-300">
                     {!hidePhotos && (
                         <div className="mb-6">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider">
-                                Fotodokumentace (max 5):
-                            </p>
+                            <div className="flex justify-between items-center mb-2">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                    Fotodokumentace (max 5):
+                                </p>
+                                {hasNoImage && count > 0 && (
+                                    <span className="text-[#8f2215] text-[9px] font-black uppercase tracking-tighter animate-pulse">
+                                        ⚠ Chybí foto
+                                    </span>
+                                )}
+                            </div>
                             <div className="grid grid-cols-3 gap-2 items-center">
-                                {/* Renderování existujících fotek */}
                                 {images.map(
                                     (file, index) =>
                                         file instanceof File && (
@@ -114,8 +134,6 @@ export default function FormPart({
                                             />
                                         )
                                 )}
-
-                                {/* Slot pro přidání další fotky */}
                                 {canAddMore && (
                                     <label className="h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-white hover:border-maingreen cursor-pointer transition-colors">
                                         <span className="text-2xl text-gray-400">
@@ -128,7 +146,6 @@ export default function FormPart({
                                             type="file"
                                             accept="image/*; capture=camera"
                                             className="hidden"
-                                            //capture="camera"
                                             onChange={(e) =>
                                                 onImageChange(
                                                     id,
@@ -145,9 +162,7 @@ export default function FormPart({
                         </div>
                     )}
 
-                    {/* Parametry dílu */}
                     <div className="space-y-4">
-                        {/* První řádek (vždy viditelný) */}
                         <div className="grid grid-cols-2 gap-4">
                             <label>
                                 <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
@@ -164,7 +179,7 @@ export default function FormPart({
                                     onFocus={(e) =>
                                         e.target.value === '0' &&
                                         (e.target.value = '')
-                                    } // Bonus: při kliku zmizí nula
+                                    }
                                 />
                             </label>
                             <label>
@@ -187,9 +202,8 @@ export default function FormPart({
                             </label>
                         </div>
 
-                        {/* Druhý řádek (viditelný pouze pokud je vyplněn první) */}
                         {count > 0 && diameter !== '' && (
-                            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
+                            <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-1 duration-300">
                                 <label>
                                     <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
                                         Počet (2)
@@ -224,7 +238,6 @@ export default function FormPart({
                         )}
                     </div>
 
-                    {/* Checkboxy - v jedné řadě pro úsporu místa */}
                     <div className="flex flex-wrap justify-between gap-4 mt-4 bg-white p-3 rounded-lg border border-gray-100">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input

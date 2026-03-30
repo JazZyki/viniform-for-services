@@ -167,6 +167,7 @@ export const ADDITIONAL_DAMAGES = [
 ];
 
 const BASIC_CONFIG = {
+    isGlobal: false,
     showExtraContact: false,
     requiredFields: ['vehicleSPZ'],
     requiredPhotos: [
@@ -225,6 +226,7 @@ const BASIC_CONFIG = {
 };
 
 const GLOBAL_CONFIG = {
+    isGlobal: true,
     showExtraContact: true,
     requiredFields: ['vehicleSPZ'],
     requiredPhotos: ['pohledZePredu', 'pohledZezadu'],
@@ -260,6 +262,7 @@ const GLOBAL_CONFIG = {
 };
 
 const CBAUTO_CONFIG = {
+    isGlobal: false,
     showExtraContact: true,
     requiredFields: ['vehicleSPZ'],
     requiredPhotos: ['pohledZePredu', 'pohledZezadu'],
