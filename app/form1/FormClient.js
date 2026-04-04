@@ -116,7 +116,7 @@ export default function FormPage({ initialTechnician }) {
             state[part.id] = Array(10).fill('');
             state[`${part.id}Count`] = 0;
             state[`${part.id}Diameter`] = '';
-            state[`${part.Id}Count2`] = 0;
+            state[`${part.id}Count2`] = 0;
             state[`${part.id}Diameter`] = '';
             state[`${part.id}Lak`] = false;
             state[`${part.id}Vymena`] = false;
@@ -127,6 +127,8 @@ export default function FormPage({ initialTechnician }) {
 
     const [formData, setFormData] = useState(createInitialState());
     const userConfig = getConfigForUser(formData.technician);
+    const isGlobalMode = userConfig.isGlobal === true || ['Kooperativa', 'ČPP'].includes(formData.insuranceCompany);
+
 
     useEffect(() => {
         async function initApp() {
@@ -345,7 +347,6 @@ export default function FormPage({ initialTechnician }) {
         const allPossibleParts = [...CAR_PARTS, ...ADDITIONAL_DAMAGES];
 
         // Detekce Global režimu (můžeš použít i jiný klíč z configu)
-        const isGlobalMode = userConfig.isGlobal === true;
 
         // 1. Spočítáme základní plné ceny dílů
         const calculatedParts = allPossibleParts.map((part) => {
@@ -726,58 +727,6 @@ export default function FormPage({ initialTechnician }) {
         };
     };
 
-    /*const isStep1Valid = () => {
-        const requiredFields = [
-            'vehicleBrand',
-            'vehicleType',
-            'vehicleSPZ',
-            'vehicleVIN',
-            'vehicleColor',
-            'vehicleYear',
-            //'vehicleDistance',
-            'insuranceCompany',
-            //'insuranceNumber',
-            'customerName',
-            'customerAddress',
-        ];
-
-        return requiredFields.every(
-            (field) =>
-                formData[field] && formData[field].toString().trim() !== ''
-        );
-    };
-
-    const isStep2Valid = () => {
-        // Seznam polí, která musí mít alespoň jednu fotku
-        const requiredFields = [
-            'zapisOPoskozeni',
-            'pohledZePredu',
-            'pohledZePreduZleva',
-            'pohledZleva',
-            'pohledZezaduZleva',
-            'pohledZezadu',
-            'pohledZezaduZprava',
-            'pohledZprava',
-            'pohledZepreduZprava',
-            'STK',
-            'VIN',
-            'tachometr',
-            'interier',
-        ];
-
-        // Zkontrolujeme, zda každé pole má alespoň jeden prvek, který je File
-        return requiredFields.every((field) =>
-            formData[field].some((img) => img instanceof File)
-        );
-    };
-
-    const isStep3Valid = () => {
-        return CAR_PARTS.every((part) => {
-            const images = formData[part.id] || [];
-            return images.some((img) => img instanceof File);
-        });
-    };*/
-
     // Načtení historie při kliknutí na tlačítko
     const handleLoadHistory = async () => {
         const orders = await getAllArchivedOrders();
@@ -797,29 +746,6 @@ export default function FormPage({ initialTechnician }) {
             setShowHistory(false);
         }
     };
-
-    /*const handleImport = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const importedData = JSON.parse(event.target.result);
-                if (
-                    window.confirm(
-                        'Importovat data? Aktuální formulář bude přepsán.'
-                    )
-                ) {
-                    setFormData(importedData);
-                    alert('Data byla úspěšně importována.');
-                }
-            } catch (err) {
-                alert('Chyba: Neplatný formát souboru.');
-            }
-        };
-        reader.readAsText(file);
-    };*/
 
     const isSpzReady = formData.vehicleSPZ?.trim().length >= 3;
 
@@ -1328,9 +1254,7 @@ export default function FormPage({ initialTechnician }) {
                                                 realPartPrices[part.id] || 0
                                             }
                                             damageOrder={orderIndex}
-                                            isGlobalMode={
-                                                userConfig.isGlobal === true
-                                            }
+                                            isGlobalMode={isGlobalMode}
                                         />
                                     </div>
                                 );
