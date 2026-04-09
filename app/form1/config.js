@@ -309,6 +309,54 @@ const CBAUTO_CONFIG = {
         notes: [134, 100], // Pozice pro detailNotes
     },
 };
+const CSOB_CONFIG = {
+    isGlobal: false,
+    showExtraContact: true,
+    requiredFields: ['vehicleSPZ'],
+    requiredPhotos: ['pohledZePredu', 'pohledZezadu'],
+    insurers: [
+        'Allianz',
+        'AXA',
+        //'ČPP',
+        'ČSOB Pojišťovna',
+        'Direct',
+        'Generali',
+        //'Kooperativa',
+        'Pillow',
+        'Servisní pojišťovna',
+        'Slavia',
+        'VZP',
+        'Ostatní',
+    ],
+    hiddenFields: [
+        'vehicleVIN',
+        'vehicleType',
+        'vehicleYear',
+        'vehicleDistance',
+        'vehicleColor',
+    ],
+    pdfBackground: '/zakazkovy_list_globals.jpg',
+    tableStartY: 100,
+    signaturePos: [35, 276, 30, 10], // x, y, šířka, výška
+    totalPricePos: [14, 256],
+    txtPos: {
+        technician: [133, 243],
+        customerName: [14, 49],
+        customerPhone: [122, 49],
+        customerAddress: [14, 60],
+        vehicleBrand: [14, 72],
+        vehicleType: [65, 72],
+        vehicleSPZ: [122, 72],
+        vehicleVIN: [14, 83],
+        vehicleDistance: [107, 83],
+        vehicleYear: [136, 83],
+        vehicleColor: [167, 83],
+        insuranceCompany: [14, 83],
+        insuranceNumber: [88, 83],
+        serviceDate: [154, 83],
+        notes: [134, 100], // Pozice pro detailNotes
+    },
+};
 export const USER_ROLES = {
     admin: BASIC_CONFIG,
     Vinicars: BASIC_CONFIG,
@@ -338,7 +386,7 @@ export const USER_ROLES = {
     BOB: CBAUTO_CONFIG,
     ARVAL: CBAUTO_CONFIG,
     BUSINESS: CBAUTO_CONFIG,
-    CSOB: CBAUTO_CONFIG,
+    CSOB: CSOB_CONFIG,
     DOLAK: CBAUTO_CONFIG,
     KACMACEK: CBAUTO_CONFIG,
     AUTONOVA: CBAUTO_CONFIG,
