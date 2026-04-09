@@ -390,6 +390,7 @@ export const USER_ROLES = {
     DOLAK: CBAUTO_CONFIG,
     KACMACEK: CBAUTO_CONFIG,
     AUTONOVA: CBAUTO_CONFIG,
+    AUTOPOLY: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {

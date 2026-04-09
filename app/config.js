@@ -30,6 +30,8 @@ export const ROLES = {
     SUMPservis: 'editor',
     DOLAK: 'editor',
     KACMACEK: 'editor',
-    AUTINOVA: 'editor',
+    AUTONOVA: 'editor',
+    AUTOPOLY: 'editor',
+
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };
