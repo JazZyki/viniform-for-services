@@ -32,6 +32,15 @@ export const ROLES = {
     KACMACEK: 'editor',
     AUTONOVA: 'editor',
     AUTOPOLY: 'editor',
+    MOTOMORAVA: 'editor',
+    MBMORAVIA: 'editor',
+    MBSEVER: 'editor',
+    AUTOTICHY: 'editor',
+    LAROS: 'editor',
+    AUTOHELLER: 'editor',
+    AUTOTOMAN: 'editor',
+    RTTORAX: 'editor',
+    SAG: 'editor'
 
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };
