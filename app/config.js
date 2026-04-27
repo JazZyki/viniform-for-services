@@ -43,7 +43,8 @@ export const ROLES = {
     SAG: 'editor',
     SERVIND: 'editor',
     CARTECOC: 'editor',
-    CARTECOS: 'editor'
+    CARTECOS: 'editor',
+    DRIVALIA: 'editor',
 
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };

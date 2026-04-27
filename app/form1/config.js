@@ -402,7 +402,8 @@ export const USER_ROLES = {
     SAG: CBAUTO_CONFIG,
     SERVIND: CBAUTO_CONFIG,
     CARTECOC: CBAUTO_CONFIG,
-    CARTECOS: CBAUTO_CONFIG
+    CARTECOS: CBAUTO_CONFIG,
+    DRIVALIA: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {
