@@ -40,7 +40,9 @@ export const ROLES = {
     AUTOHELLER: 'editor',
     AUTOTOMAN: 'editor',
     RTTORAX: 'editor',
-    SAG: 'editor'
+    SAG: 'editor',
+    SERVIND: 'editor',
+    CARTECOC: 'editor',
 
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };

@@ -399,8 +399,9 @@ export const USER_ROLES = {
     AUTOHELLER: CBAUTO_CONFIG,
     AUTOTOMAN: CBAUTO_CONFIG,
     RTTORAX: CBAUTO_CONFIG,
-    SAG: CBAUTO_CONFIG
-
+    SAG: CBAUTO_CONFIG,
+    SERVIND: CBAUTO_CONFIG,
+    CARTECOC: CBAUTO_CONFIG,
 };
 
 export const getConfigForUser = (username) => {
