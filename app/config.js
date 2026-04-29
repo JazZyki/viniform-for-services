@@ -49,7 +49,8 @@ export const ROLES = {
     INVELTPLZ: 'editor',
     LOUWMANTOY: 'editor',
     LOUWMANLEX: 'editor',
-    LKQ: 'editor'
+    LKQ: 'editor',
+    GENERALI: 'editor'
 
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };
