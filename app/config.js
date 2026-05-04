@@ -45,6 +45,12 @@ export const ROLES = {
     CARTECOC: 'editor',
     CARTECOS: 'editor',
     DRIVALIA: 'editor',
+    INVELTPHA: 'editor',
+    INVELTPLZ: 'editor',
+    LOUWMANTOY: 'editor',
+    LOUWMANLEX: 'editor',
+    LKQ: 'editor',
+    GENERALI: 'editor'
 
     // Všechny ostatní, co tu nejsou, budeme považovat za "user"
 };
