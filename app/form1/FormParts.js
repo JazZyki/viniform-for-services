@@ -28,12 +28,24 @@ export default function FormPart({
     const diameter = formData[`${id}Diameter`];
     const count2 = parseInt(formData[`${id}Count2`]) || 0;
     const diameter2 = formData[`${id}Diameter2`];
+    const count3 = parseInt(formData[`${id}Count3`]) || 0;
+    const diameter3 = formData[`${id}Diameter3`] || '';
+    const count4 = parseInt(formData[`${id}Count4`]) || 0;
+    const diameter4 = formData[`${id}Diameter4`] || '';
+    const count5 = parseInt(formData[`${id}Count5`]) || 0;
+    const diameter5 = formData[`${id}Diameter5`] || '';
 
     const currentPrice = calculateDentPrice(
         count,
         diameter,
         count2,
         diameter2,
+        count3,
+        diameter3,
+        count4,
+        diameter4,
+        count5,
+        diameter5,
         formData[`${id}Alu`],
         formData[`${id}Lak`],
         isGlobalMode // Předáme informaci o ceníku do kalkulátoru
@@ -223,6 +235,108 @@ export default function FormPart({
                                     <select
                                         name={`${id}Diameter2`}
                                         value={formData[`${id}Diameter2`] || ''}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    >
+                                        <option value="">-</option>
+                                        {DENT_DIAMETERS.map((d) => (
+                                            <option key={d} value={d}>
+                                                {d} mm
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+                        )}
+                        {count2 > 0 && diameter2 !== '' && (
+                            <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-1 duration-300">
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Počet (3)
+                                    </span>
+                                    <input
+                                        type="number"
+                                        name={`${id}Count3`}
+                                        value={formData[`${id}Count3`] || 0}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    />
+                                </label>
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Průměr (3)
+                                    </span>
+                                    <select
+                                        name={`${id}Diameter3`}
+                                        value={formData[`${id}Diameter3`] || ''}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    >
+                                        <option value="">-</option>
+                                        {DENT_DIAMETERS.map((d) => (
+                                            <option key={d} value={d}>
+                                                {d} mm
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+                        )}
+                        {count3 > 0 && diameter3 !== '' && (
+                            <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-1 duration-300">
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Počet (4)
+                                    </span>
+                                    <input
+                                        type="number"
+                                        name={`${id}Count4`}
+                                        value={formData[`${id}Count4`] || 0}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    />
+                                </label>
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Průměr (4)
+                                    </span>
+                                    <select
+                                        name={`${id}Diameter4`}
+                                        value={formData[`${id}Diameter4`] || ''}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    >
+                                        <option value="">-</option>
+                                        {DENT_DIAMETERS.map((d) => (
+                                            <option key={d} value={d}>
+                                                {d} mm
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+                        )}
+                        {count4 > 0 && diameter4 !== '' && (
+                            <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-1 duration-300">
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Počet (5)
+                                    </span>
+                                    <input
+                                        type="number"
+                                        name={`${id}Count5`}
+                                        value={formData[`${id}Count5`] || 0}
+                                        onChange={onChange}
+                                        className="w-full p-2 border rounded-lg bg-white h-[40px]"
+                                    />
+                                </label>
+                                <label>
+                                    <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        Průměr (5)
+                                    </span>
+                                    <select
+                                        name={`${id}Diameter5`}
+                                        value={formData[`${id}Diameter5`] || ''}
                                         onChange={onChange}
                                         className="w-full p-2 border rounded-lg bg-white h-[40px]"
                                     >

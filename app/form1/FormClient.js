@@ -118,6 +118,12 @@ export default function FormPage({ initialTechnician }) {
             state[`${part.id}Diameter`] = '';
             state[`${part.id}Count2`] = 0;
             state[`${part.id}Diameter`] = '';
+            state[`${part.id}Count3`] = 0;
+            state[`${part.id}Diameter3`] = '';
+            state[`${part.id}Count4`] = 0;
+            state[`${part.id}Diameter4`] = '';
+            state[`${part.id}Count5`] = 0;
+            state[`${part.id}Diameter5`] = '';
             state[`${part.id}Lak`] = false;
             state[`${part.id}Vymena`] = false;
         });
@@ -355,6 +361,12 @@ export default function FormPage({ initialTechnician }) {
                 formData[`${part.id}Diameter`],
                 formData[`${part.id}Count2`],
                 formData[`${part.id}Diameter2`],
+                formData[`${part.id}Count3`],
+                formData[`${part.id}Diameter3`],
+                formData[`${part.id}Count4`],
+                formData[`${part.id}Diameter4`],
+                formData[`${part.id}Count5`],
+                formData[`${part.id}Diameter5`],
                 formData[`${part.id}Alu`],
                 formData[`${part.id}Lak`],
                 isGlobalMode
@@ -568,6 +580,12 @@ export default function FormPage({ initialTechnician }) {
                 const diam1 = formData[`${part.id}Diameter`] || '-';
                 const count2 = formData[`${part.id}Count2`] || 0;
                 const diam2 = formData[`${part.id}Diameter2`] || '';
+                const count3 = formData[`${part.id}Count3`] || 0;
+                const diam3 = formData[`${part.id}Diameter3`] || '';
+                const count4 = formData[`${part.id}Count4`] || 0;
+                const diam4 = formData[`${part.id}Diameter4`] || '';
+                const count5 = formData[`${part.id}Count5`] || 0;
+                const diam5 = formData[`${part.id}Diameter5`] || '';
 
                 const lak = formData[`${part.id}Lak`] ? 'ANO' : 'NE';
                 const alu = formData[`${part.id}Alu`] ? 'ANO' : 'NE';
@@ -575,6 +593,9 @@ export default function FormPage({ initialTechnician }) {
 
                 // Pomocná proměnná pro zjištění, jestli máme dva řádky dat
                 const hasSecondRow = count2 > 0 && diam2 !== '';
+                const hasThirdRow = count3 > 0 && diam3 !== '';
+                const hasFourthRow = count4 > 0 && diam4 !== '';
+                const hasFifthRow = count5 > 0 && diam5 !== '';
 
                 // Vykreslení Labelu, Laku, Alu a Výměny (ty jsou pro díl společné)
                 doc.text(`${part.label}`, startX, currentY);
@@ -615,6 +636,54 @@ export default function FormPage({ initialTechnician }) {
                     doc.text(`${count2}`, startX + col.label, currentY);
                     doc.text(
                         `${diam2} mm`,
+                        startX + col.label + col.count,
+                        currentY
+                    );
+
+                    // Přidáme malý posun, aby border nebyl nalepený na textu
+                    currentY += 1;
+                }
+
+                if (hasThirdRow) {
+                    // Posuneme se o kousek níž pro třetí řádek v rámci téhož dílu
+                    currentY += 4.5;
+
+                    // Vykreslení třetího řádku KS a PRŮMĚR
+                    doc.text(`${count3}`, startX + col.label, currentY);
+                    doc.text(
+                        `${diam3} mm`,
+                        startX + col.label + col.count,
+                        currentY
+                    );
+
+                    // Přidáme malý posun, aby border nebyl nalepený na textu
+                    currentY += 1;
+                }
+
+                if (hasFourthRow) {
+                    // Posuneme se o kousek níž pro čtvrtý řádek v rámci téhož dílu
+                    currentY += 4.5;
+
+                    // Vykreslení čtvrtého řádku KS a PRŮMĚR
+                    doc.text(`${count4}`, startX + col.label, currentY);
+                    doc.text(
+                        `${diam4} mm`,
+                        startX + col.label + col.count,
+                        currentY
+                    );
+
+                    // Přidáme malý posun, aby border nebyl nalepený na textu
+                    currentY += 1;
+                }
+
+                if (hasFifthRow) {
+                    // Posuneme se o kousek níž pro pátý řádek v rámci téhož dílu
+                    currentY += 4.5;
+
+                    // Vykreslení pátého řádku KS a PRŮMĚR
+                    doc.text(`${count5}`, startX + col.label, currentY);
+                    doc.text(
+                        `${diam5} mm`,
                         startX + col.label + col.count,
                         currentY
                     );
